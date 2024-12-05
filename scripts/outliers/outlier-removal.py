@@ -9,7 +9,7 @@ import numpy as np
 from scipy.stats import pearsonr
 from sklearn.metrics import mean_squared_error
 import seaborn as sns
-import functions
+from ...resources import functions
 from datetime import timedelta
 
 project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
