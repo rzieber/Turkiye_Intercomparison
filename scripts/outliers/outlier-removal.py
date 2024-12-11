@@ -9,18 +9,18 @@ import numpy as np
 from scipy.stats import pearsonr
 from sklearn.metrics import mean_squared_error
 import seaborn as sns
-from ...resources import functions
 from datetime import timedelta
 
 project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.append(project_root)
+from resources import functions
 
 data_origin = r"/Users/rzieber/Documents/3D-PAWS/Turkiye/output/"
 #data_destination = r"/Users/rzieber/Documents/3D-PAWS/Turkiye/plots/time_series/complete_records/"
-#data_destination = r"/Users/rzieber/Documents/3D-PAWS/Turkiye/plots/time_series/monthly_plots/"
+data_destination = r"/Users/rzieber/Documents/3D-PAWS/Turkiye/plots/time_series/monthly_plots/"
 #data_destination = r"/Users/rzieber/Documents/3D-PAWS/Turkiye/plots/time_series_IQR-Filter/monthly_plots/"
 #data_destination = r"/Users/rzieber/Documents/3D-PAWS/Turkiye/plots/time_series_Z_and_IQR/monthly_plots/"
-data_destination = r"/Users/rzieber/Documents/3D-PAWS/Turkiye/plots/time_series_Z_and_IQR_and_Diff/monthly_plots/"
+#data_destination = r"/Users/rzieber/Documents/3D-PAWS/Turkiye/plots/time_series_Z_and_IQR_and_Diff/monthly_plots/"
 #data_destination = r"/Users/rzieber/Documents/3D-PAWS/Turkiye/plots/box_plots/monthly_plots/"
 #data_destination = r"/Users/rzieber/Documents/3D-PAWS/Turkiye/plots/box_plots_IQR-Filter/monthly_plots/"
 #data_destination = r"/Users/rzieber/Documents/3D-PAWS/Turkiye/plots/box_plots_Z_and_IQR/monthly_plots/"
@@ -330,229 +330,229 @@ for i in range(len(station_directories)):
             })
             paws_outliers = pd.concat([paws_outliers, outliers_to_add], ignore_index=True)
 
-    paws_df_FILTERED.to_csv(f"/Users/rzieber/Downloads/fill_gaps_paws_{station_directories[i][8:14]}.csv")
-    tsms_df_FILTERED.to_csv(f"/Users/rzieber/Downloads/fill_gaps_tsms_{station_directories[i][8:14]}.csv")
+    """
+    =============================================================================================================================
+    Phase 4: Filter out contextual outliers
+    =============================================================================================================================
+    """
+    print(f"Phase 4: Filtering out contextual outliers.")
 
-    # """
-    # =============================================================================================================================
-    # Phase 4: Filter out contextual outliers
-    # =============================================================================================================================
-    # """
-    # print(f"Phase 4: Filtering out contextual outliers.")
+    tsms_df_FILTERED.reset_index(drop=True, inplace=True)           # Reset the index to ensure it is a simple range
+    paws_df_FILTERED.reset_index(drop=True, inplace=True)
 
-    # tsms_df_FILTERED.reset_index(drop=True, inplace=True)           # Reset the index to ensure it is a simple range
-    # paws_df_FILTERED.reset_index(drop=True, inplace=True)
+    for variable in variable_mapper:                                # Filtering TSMS --------------------------------------------
+        if variable in ["avg_wind_speed", "avg_wind_dir", "total_rainfall"]: continue
 
-    # for variable in variable_mapper:                                # Filtering TSMS --------------------------------------------
-    #     if variable in ["avg_wind_speed", "avg_wind_dir", "total_rainfall"]: continue
+        existing_nulls = tsms_df_FILTERED[variable].isnull()   
 
-    #     existing_nulls = tsms_df_FILTERED[variable].isnull()   
+        tsms_df_FILTERED[variable] = pd.to_numeric(tsms_df_FILTERED[variable], errors='coerce')
 
-    #     tsms_df_FILTERED[variable] = pd.to_numeric(tsms_df_FILTERED[variable], errors='coerce')
-
-    #     # IQR -------------------
-    #     print("\t\tIQR")
-    #     Q1 = tsms_df_FILTERED[variable].quantile(0.25)
-    #     Q3 = tsms_df_FILTERED[variable].quantile(0.75)
+        # IQR -------------------
+        print("\t\tIQR")
+        Q1 = tsms_df_FILTERED[variable].quantile(0.25)
+        Q3 = tsms_df_FILTERED[variable].quantile(0.75)
         
-    #     IQR = Q3 - Q1
+        IQR = Q3 - Q1
         
-    #     lower_bound = Q1 - 1.5 * IQR
-    #     upper_bound = Q3 + 1.5 * IQR
+        lower_bound = Q1 - 1.5 * IQR
+        upper_bound = Q3 + 1.5 * IQR
         
-    #     mask_IQR = (tsms_df_FILTERED[variable] < lower_bound) | (tsms_df_FILTERED[variable] > upper_bound)
+        mask_IQR = (tsms_df_FILTERED[variable] < lower_bound) | (tsms_df_FILTERED[variable] > upper_bound)
 
-    #     new_null_IQR = mask_IQR &  ~existing_nulls 
-    #     tsms_df_FILTERED.loc[new_null_IQR, variable] = np.nan
-    #     # -----------------------
+        new_null_IQR = mask_IQR &  ~existing_nulls 
+        tsms_df_FILTERED.loc[new_null_IQR, variable] = np.nan
+        # -----------------------
 
-    #     # z-score ---------------
-    #     print("\t\tZ-score")
-    #     window = 20                                               
-    #     tsms_df_FILTERED['rolling_mean'] = tsms_df_FILTERED[variable].rolling(window=window).mean() 
-    #     tsms_df_FILTERED['rolling_std'] = tsms_df_FILTERED[variable].rolling(window=window).std()
+        # z-score ---------------
+        print("\t\tZ-score")
+        window = 20                                               
+        tsms_df_FILTERED['rolling_mean'] = tsms_df_FILTERED[variable].rolling(window=window).mean() 
+        tsms_df_FILTERED['rolling_std'] = tsms_df_FILTERED[variable].rolling(window=window).std()
 
-    #     tsms_df_FILTERED['z-score'] = (tsms_df_FILTERED[variable] - tsms_df_FILTERED['rolling_mean']) / tsms_df_FILTERED['rolling_std']         
+        tsms_df_FILTERED['z-score'] = (tsms_df_FILTERED[variable] - tsms_df_FILTERED['rolling_mean']) / tsms_df_FILTERED['rolling_std']         
 
-    #     threshold = 3                                              
+        threshold = 3                                              
 
-    #     mask_Zscore = tsms_df_FILTERED['z-score'].abs() > threshold   
-    #     new_null_Zscore = mask_Zscore & ~existing_nulls
-    #     tsms_df_FILTERED.loc[new_null_Zscore, variable] = np.nan 
+        mask_Zscore = tsms_df_FILTERED['z-score'].abs() > threshold   
+        new_null_Zscore = mask_Zscore & ~existing_nulls
+        tsms_df_FILTERED.loc[new_null_Zscore, variable] = np.nan 
 
-    #     tsms_df_FILTERED.drop(columns=['rolling_mean', 'rolling_std', 'z-score'], inplace=True)    
-    #     # -----------------------
+        tsms_df_FILTERED.drop(columns=['rolling_mean', 'rolling_std', 'z-score'], inplace=True)    
+        # -----------------------
 
 
-    #     # Abs Diff --------------
-    #     print("\t\tAbsolute Diff")
+        # Abs Diff --------------
+        # print("\t\tAbsolute Diff")
 
-    #     threshold = None
-    #     last_non_null = None
-    #     diff_outliers = []
+        # threshold = None
+        # last_non_null = None
+        # diff_outliers = []
 
-    #     i = 0
-    #     while i < len(tsms_df_FILTERED) - 2:
-    #         if pd.isna(last_non_null): print("Error with ", last_non_null, ". Current index: ", i)
-    #         if pd.notna(tsms_df_FILTERED.loc[i, variable]): 
-    #             last_non_null = tsms_df_FILTERED.loc[i, variable]
-    #         if pd.isna(tsms_df_FILTERED.loc[i+1, variable]): 
-    #             i += 1
-    #             continue
+        # i = 0
+        # while i < len(tsms_df_FILTERED) - 2:
+        #     if pd.isna(last_non_null): print("Error with ", last_non_null, ". Current index: ", i)
+        #     if pd.notna(tsms_df_FILTERED.loc[i, variable]): 
+        #         last_non_null = tsms_df_FILTERED.loc[i, variable]
+        #     if pd.isna(tsms_df_FILTERED.loc[i+1, variable]): 
+        #         i += 1
+        #         continue
 
-    #         if pd.isna(last_non_null) and i == 0: continue
+        #     if pd.isna(last_non_null) and i == 0: continue
 
-    #         if variable == "temp": threshold = 2
-    #         elif variable == "humidity": threshold = 2
-    #         elif variable in ["actual_pressure", "sea_level_pressure"]: threshold = 2
+        #     if variable == "temp": threshold = 2
+        #     elif variable == "humidity": threshold = 2
+        #     elif variable in ["actual_pressure", "sea_level_pressure"]: threshold = 2
 
-    #         diff = abs(tsms_df_FILTERED.loc[i+1, variable] - last_non_null)
+        #     diff = abs(tsms_df_FILTERED.loc[i+1, variable] - last_non_null)
 
-    #         if diff is None or last_non_null is None: 
-    #                 print("Diff: ", diff, "\t\tType: ", type(diff))
-    #                 print("Last non null: ", last_non_null, "\t\tType: ", type(last_non_null))
-    #                 print("Index: ", i)
-    #                 continue
+        #     if diff is None or last_non_null is None: 
+        #             print("Diff: ", diff, "\t\tType: ", type(diff))
+        #             print("Last non null: ", last_non_null, "\t\tType: ", type(last_non_null))
+        #             print("Index: ", i)
+        #             continue
 
-    #         if diff > threshold: 
-    #             diff_outliers.append({
-    #                 'date': tsms_df_FILTERED.loc[i+1, 'date'],
-    #                 'column_name': variable,
-    #                 'original_value': tsms_df_FILTERED.loc[i+1, variable],
-    #                 'outlier_type': 'diff contextual'
-    #             })
+        #     if diff > threshold: 
+        #         diff_outliers.append({
+        #             'date': tsms_df_FILTERED.loc[i+1, 'date'],
+        #             'column_name': variable,
+        #             'original_value': tsms_df_FILTERED.loc[i+1, variable],
+        #             'outlier_type': 'diff contextual'
+        #         })
 
-    #             tsms_df_FILTERED.loc[i+1, variable] = np.nan
+        #         tsms_df_FILTERED.loc[i+1, variable] = np.nan
 
-    #         i += 1
+        #     i += 1
         
-    #     diff_outliers_df = pd.DataFrame(diff_outliers)
-    #     # -----------------------         
+        # diff_outliers_df = pd.DataFrame(diff_outliers)
+        # -----------------------         
         
-    #     outliers_to_add = pd.DataFrame({
-    #         'date': tsms_df_FILTERED.loc[new_null_IQR, 'date'],
-    #         'column_name': variable,
-    #         'original_value': tsms_df_FILTERED.loc[new_null_IQR, variable],
-    #         'outlier_type': 'IQR contextual'
-    #     })
-    #     tsms_outliers = pd.concat([tsms_outliers, outliers_to_add], ignore_index=True)
+        outliers_to_add = pd.DataFrame({
+            'date': tsms_df_FILTERED.loc[new_null_IQR, 'date'],
+            'column_name': variable,
+            'original_value': tsms_df_FILTERED.loc[new_null_IQR, variable],
+            'outlier_type': 'IQR contextual'
+        })
+        tsms_outliers = pd.concat([tsms_outliers, outliers_to_add], ignore_index=True)
         
-    #     outliers_to_add = pd.DataFrame({
-    #         'date': tsms_df_FILTERED.loc[new_null_Zscore, 'date'],
-    #         'column_name': variable,
-    #         'original_value': tsms_df_FILTERED.loc[new_null_Zscore, variable],
-    #         'outlier_type': 'z-score contextual'
-    #     })
-    #     tsms_outliers = pd.concat([tsms_outliers, outliers_to_add], ignore_index=True)
+        outliers_to_add = pd.DataFrame({
+            'date': tsms_df_FILTERED.loc[new_null_Zscore, 'date'],
+            'column_name': variable,
+            'original_value': tsms_df_FILTERED.loc[new_null_Zscore, variable],
+            'outlier_type': 'z-score contextual'
+        })
+        tsms_outliers = pd.concat([tsms_outliers, outliers_to_add], ignore_index=True)
 
-    #     tsms_outliers = pd.concat([tsms_outliers, diff_outliers_df], ignore_index=True)
-
-
-    #     outliers_to_add = None
+        #tsms_outliers = pd.concat([tsms_outliers, diff_outliers_df], ignore_index=True)
 
 
-    #     for var in variable_mapper[variable]:               # Filtering PAWS ----------------------------------------------------
-    #         existing_nulls = paws_df_FILTERED[var].isnull()
+        outliers_to_add = None
 
-    #         paws_df_FILTERED[var] = pd.to_numeric(paws_df_FILTERED[var], errors='coerce')
 
-    #         # Abs Diff -------------- FOR THE HTU ONLY!!!!!!!!
-    #         if var != "htu_hum": continue;
+        for var in variable_mapper[variable]:               # Filtering PAWS ----------------------------------------------------
+            existing_nulls = paws_df_FILTERED[var].isnull()
 
-    #         threshold = 1.2
-    #         last_non_null = None
-    #         diff_outliers = []
+            paws_df_FILTERED[var] = pd.to_numeric(paws_df_FILTERED[var], errors='coerce')  
 
-    #         i = 0
-    #         while i < len(paws_df_FILTERED) - 2:
-    #             if pd.isna(last_non_null): print("Error with ", last_non_null, ". Current index: ", i)
+            # IQR -------------------
+            Q1 = paws_df_FILTERED[var].quantile(0.25)
+            Q3 = paws_df_FILTERED[var].quantile(0.75)
+            
+            IQR = Q3 - Q1
+            
+            lower_bound = Q1 - 1.5 * IQR
+            upper_bound = Q3 + 1.5 * IQR
+            
+            mask_IQR = (paws_df_FILTERED[var] < lower_bound) | (paws_df_FILTERED[var] > upper_bound)
+
+            new_null_IQR = mask_IQR & ~existing_nulls 
+            paws_df_FILTERED.loc[new_null_IQR, var] = np.nan 
+            # -----------------------
+
+            # z-score ---------------
+            paws_df_FILTERED['rolling_mean'] = paws_df_FILTERED[var].rolling(window=window).mean()                   
+            paws_df_FILTERED['rolling_std'] = paws_df_FILTERED[var].rolling(window=window).std()
+
+            paws_df_FILTERED['z-score'] = (paws_df_FILTERED[var] - paws_df_FILTERED['rolling_mean']) / paws_df_FILTERED['rolling_std']           
+
+            threshold = 3                                      
+
+            mask_Zscore = paws_df_FILTERED['z-score'].abs() > threshold  
+            new_null_Zscore = mask_Zscore & ~existing_nulls
+            paws_df_FILTERED.loc[new_null_Zscore, var] = np.nan 
+
+            paws_df_FILTERED.drop(columns=['rolling_mean', 'rolling_std', 'z-score'], inplace=True)  
+            # -----------------------
+
+            # Abs Diff -------------- FOR THE HTU ONLY!!!!!!!!
+            # if var != "htu_hum": continue;
+
+            # threshold = 1.2
+            # last_non_null = None
+            # diff_outliers = []
+
+            # i = 0
+            # while i < len(paws_df_FILTERED) - 2:
+            #     if pd.isna(last_non_null): print("Error with ", last_non_null, ". Current index: ", i)
                 
-    #             if pd.notna(paws_df_FILTERED.loc[i, var]): 
-    #                 last_non_null = paws_df_FILTERED.loc[i, var]
-    #             if pd.isna(paws_df_FILTERED.loc[i+1, var]): 
-    #                 i += 1
-    #                 continue
+            #     if pd.notna(paws_df_FILTERED.loc[i, var]): 
+            #         last_non_null = paws_df_FILTERED.loc[i, var]
+            #     if pd.isna(paws_df_FILTERED.loc[i+1, var]): 
+            #         i += 1
+            #         continue
 
-    #             if pd.isna(last_non_null) and i == 0: continue
+            #     if pd.isna(last_non_null) and i == 0: continue
 
-    #             diff = abs(paws_df_FILTERED.loc[i+1, var] - last_non_null)
+            #     diff = abs(paws_df_FILTERED.loc[i+1, var] - last_non_null)
                 
-    #             if diff is None or last_non_null is None: 
-    #                 print("Diff: ", diff, "\t\tType: ", type(diff))
-    #                 print("Last non null: ", last_non_null, "\t\tType: ", type(last_non_null))
-    #                 print(i)
-    #                 i += 1
-    #                 continue
+            #     if diff is None or last_non_null is None: 
+            #         print("Diff: ", diff, "\t\tType: ", type(diff))
+            #         print("Last non null: ", last_non_null, "\t\tType: ", type(last_non_null))
+            #         print(i)
+            #         i += 1
+            #         continue
 
-    #             if diff > threshold: 
-    #                 diff_outliers.append({
-    #                     'date': paws_df_FILTERED.loc[i+1, 'date'],
-    #                     'column_name': var,
-    #                     'original_value': paws_df_FILTERED.loc[i+1, var],
-    #                     'outlier_type': 'diff contextual'
-    #                 })
+            #     if diff > threshold: 
+            #         diff_outliers.append({
+            #             'date': paws_df_FILTERED.loc[i+1, 'date'],
+            #             'column_name': var,
+            #             'original_value': paws_df_FILTERED.loc[i+1, var],
+            #             'outlier_type': 'diff contextual'
+            #         })
 
-    #                 paws_df_FILTERED.loc[i+1, var] = np.nan
+            #         paws_df_FILTERED.loc[i+1, var] = np.nan
 
-    #             i += 1
+            #     i += 1
             
-    #         diff_outliers_df = pd.DataFrame(diff_outliers)
-    #         # -----------------------   
+            # diff_outliers_df = pd.DataFrame(diff_outliers)
+            # ----------------------- 
 
-    #         # # IQR -------------------
-    #         # Q1 = paws_df_FILTERED[var].quantile(0.25)
-    #         # Q3 = paws_df_FILTERED[var].quantile(0.75)
-            
-    #         # IQR = Q3 - Q1
-            
-    #         # lower_bound = Q1 - 1.5 * IQR
-    #         # upper_bound = Q3 + 1.5 * IQR
-            
-    #         # mask_IQR = (paws_df_FILTERED[var] < lower_bound) | (paws_df_FILTERED[var] > upper_bound)
+            outliers_to_add = pd.DataFrame({
+                'date': paws_df_FILTERED.loc[new_null_IQR, 'date'],
+                'column_name': var,
+                'original_value': paws_df_FILTERED.loc[new_null_IQR, var],
+                'outlier_type': 'IQR contextual'
+            })
+            paws_outliers = pd.concat([paws_outliers, outliers_to_add], ignore_index=True)
 
-    #         # new_null_IQR = mask_IQR & ~existing_nulls 
-    #         # paws_df_FILTERED.loc[new_null_IQR, var] = np.nan 
-    #         # # -----------------------
+            outliers_to_add = pd.DataFrame({
+                'date': paws_df_FILTERED.loc[new_null_Zscore, 'date'],
+                'column_name': var,
+                'original_value': paws_df_FILTERED.loc[new_null_Zscore, var],
+                'outlier_type': 'z-score contextual'
+            })
+            paws_outliers = pd.concat([paws_outliers, outliers_to_add], ignore_index=True)
 
-    #         # # z-score ---------------
-    #         # paws_df_FILTERED['rolling_mean'] = paws_df_FILTERED[var].rolling(window=window).mean()                   
-    #         # paws_df_FILTERED['rolling_std'] = paws_df_FILTERED[var].rolling(window=window).std()
-
-    #         # paws_df_FILTERED['z-score'] = (paws_df_FILTERED[var] - paws_df_FILTERED['rolling_mean']) / paws_df_FILTERED['rolling_std']           
-
-    #         # threshold = 3                                      
-
-    #         # mask_Zscore = paws_df_FILTERED['z-score'].abs() > threshold  
-    #         # new_null_Zscore = mask_Zscore & ~existing_nulls
-    #         # paws_df_FILTERED.loc[new_null_Zscore, var] = np.nan 
-
-    #         # paws_df_FILTERED.drop(columns=['rolling_mean', 'rolling_std', 'z-score'], inplace=True)  
-    #         # # -----------------------
-
-    #         outliers_to_add = pd.DataFrame({
-    #             'date': paws_df_FILTERED.loc[new_null_IQR, 'date'],
-    #             'column_name': var,
-    #             'original_value': paws_df_FILTERED.loc[new_null_IQR, var],
-    #             'outlier_type': 'IQR contextual'
-    #         })
-    #         paws_outliers = pd.concat([paws_outliers, outliers_to_add], ignore_index=True)
-
-    #         outliers_to_add = pd.DataFrame({
-    #             'date': paws_df_FILTERED.loc[new_null_Zscore, 'date'],
-    #             'column_name': var,
-    #             'original_value': paws_df_FILTERED.loc[new_null_Zscore, var],
-    #             'outlier_type': 'z-score contextual'
-    #         })
-    #         paws_outliers = pd.concat([paws_outliers, outliers_to_add], ignore_index=True)
-
-    #         paws_outliers = pd.concat([paws_outliers, diff_outliers_df], ignore_index=True)
+            #paws_outliers = pd.concat([paws_outliers, diff_outliers_df], ignore_index=True)
 
 
-    # print()
-    # # paws_df_FILTERED.to_csv(f"/Users/rzieber/Downloads/paws_FILTERED_{station_directories[i][8:14]}.csv")
-    # # tsms_df_FILTERED.to_csv(f"/Users/rzieber/Downloads/tsms_FILTERED_{station_directories[i][8:14]}.csv")
-    # paws_outliers.to_csv(f"/Users/rzieber/Downloads/paws_outliers_{station_directories[i][8:14]}.csv")
-    # tsms_outliers.to_csv(f"/Users/rzieber/Downloads/tsms_outliers_{station_directories[i][8:14]}.csv")
+
+    print()
+    # paws_df_FILTERED.to_csv(f"/Users/rzieber/Downloads/paws_FILTERED_{station_directories[i][8:14]}.csv")
+    # tsms_df_FILTERED.to_csv(f"/Users/rzieber/Downloads/tsms_FILTERED_{station_directories[i][8:14]}.csv")
+    paws_outliers.to_csv(f"/Users/rzieber/Downloads/paws_outliers_{station_directories[i][8:14]}.csv")
+    tsms_outliers.to_csv(f"/Users/rzieber/Downloads/tsms_outliers_{station_directories[i][8:14]}.csv")
+
+
 
 # ----------------------------------------------------------------------------------------------------------------------------------------------- PLOT GEN LOGIC
     
