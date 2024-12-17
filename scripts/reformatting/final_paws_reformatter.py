@@ -56,7 +56,7 @@ data_origin_partII = "/Users/rzieber/Documents/3D-PAWS/Turkiye/raw/3DPAWS/Jan-20
 all_files_partI = sorted([file for file in Path(data_origin_partI).rglob('*') if file.is_file() and file.name != ".DS_Store"])
 all_files_partII = sorted([file for file in Path(data_origin_partII).rglob('*') if file.is_file() and file.name != ".DS_Store"])
 
-paws_dfs_partI = []
+paws_dfs_partI = [] 
 paws_dfs_reformatted_partI = []
 paws_dfs_partII = []
 paws_dfs_reformatted_partII = []
@@ -71,6 +71,17 @@ for file in all_files_partII:
     paws_dfs_partII.append(
         pd.read_csv(file, low_memory=False)
     )
+
+# print("Resampling for development purposes < ------------------------------------ disable when done")
+
+# for i in range(len(paws_dfs_partI)):
+#     originalI_df = paws_dfs_partI[i]
+#     resampledI_df = originalI_df.sample(1000, random_state=42)
+#     paws_dfs_partI[i] = resampledI_df
+
+#     originalII_df = paws_dfs_partII[i]
+#     resampledII_df = originalII_df.sample(1000, random_state=42)
+#     paws_dfs_partII[i] = resampledII_df
 
 print("Building reformatted dataframes for 2022 -> Jan. 2024.")
 
