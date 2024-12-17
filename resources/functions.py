@@ -242,18 +242,30 @@ def has_errors(all_fields:dict) -> bool:
 
 
 """
-Accepts station pressure (sp), altitude (alt), and temperature (temp) to calculate the sea level pressure.
-Returns the calculated sea level pressure.
-"""
-def get_slp(sp:float, alt:float, temp:float) -> float:
-    if not isinstance(sp, float):
-        raise TypeError(f"The 'sp' parameter in get_slp() should be of type <float>, passed: {type(sp)}")
-    if not isinstance(alt, float):
-        raise TypeError(f"The 'alt' parameter in get_slp() should be of type <float>, passed: {type(alt)}")
-    if not isinstance(temp, float):
-        raise TypeError(f"The 'temp' parameter in get_slp() should be of type <float>, passed: {type(temp)}")
+Calculates the sea level pressure using observed station pressure and the station elevation (in meters).
+Returns a float rounded to one decimal place to be added into the dataframe.
+-----
+df -- the dataframe for which to calculate sea level pressure
+alt -- the altitude of the station in meters
+-----
 
-    return sp * (1 + ((0.0065*alt) / (temp + (0.0065*alt) + 273.15)))**(-5.257)
+Sea Level Pressure Approximation:
+    SLP = P x (1 + (alt/44330))^5.255                                    
+Where:
+    • P is the observed atmospheric pressure at the given altitutde.
+    • alt is the altitude above sea level in meters
+    • This constant is derived from the barometric formula and represents a scale height in meters. 
+       It is based on an average temperature and pressure profile of the atmosphere.
+    • This exponent is derived from the standard atmosphere model, which assumes a constant lapse rate 
+       and specific gas constant for dry air. It accounts for how pressure changes with altitude in a non-linear fashion.
+"""
+def calc_slp(df:pd.DataFrame, alt:int) -> float:
+    if not isinstance(df, pd.DataFrame):
+        raise TypeError(f"The calc_slp() function expects 'df' parameter to be of type <DataFrame>, passed: {type(df)}")
+    if not isinstance(alt, int):
+        raise TypeError(f"The calc_slp() function expects 'alt' parameter to be of type <int>, passed: {type(alt)}")
+    
+    return round(df["bmp2_pres"]*(293/(293-(alt*0.0065))), 1)
 
 
 def get_compass_dir(degrees):
@@ -279,30 +291,36 @@ def get_compass_dir(degrees):
 
 """
 Helper function to fill_empty_rows()
-The number of columns in each station's csv varies. This function dynamically builds a new row to fill in missing timestamps regardless
-of however many columns there might be. Missing rows should be blank.
+Builds a row to be merged with the dataframe for a missing timestamp.
+Uses the dataframe's column order.
+
 columns -- the df's column attribute
 missing_timestamp -- the timestamp for the missing row
+fill_empty -- specify what value should populate cells, np.nan by default [OPTIONAL] 
 """
-def _build_empty_row(columns:Index, missing_timestamp:Timestamp) -> list:
+def _build_empty_row(columns:Index, missing_timestamp:Timestamp, fill_empty=np.nan) -> list:
     if not isinstance(columns, Index):
         raise TypeError(f"The build_empty_row() function expects 'columns' parameter to be of type <Index>, passed: {type(columns)}")
     if not isinstance(missing_timestamp, Timestamp):
         raise TypeError(f"The build_empty_row() function expects 'missing_timestamp' parameter to be of type <Timestamp>, passed: {type(missing_timestamp)}")
 
-    next_row = [missing_timestamp]
+    next_row = []
 
     for col in columns:
-        if col == 'date': continue
+        if col == 'date': 
+            next_row.append(missing_timestamp)
+            continue
 
-        next_row.append(np.nan)
+        next_row.append(fill_empty)
 
     return next_row
 
 
 """
 Create a list to merge with the reformatted dataframe that fills in data gaps with missing timestamps. 
-Merges that list with the reformatted dataframe and returns it. 
+Merges that list with the reformatted dataframe, sorts by time, and returns it. 
+REQUIREMENT: the timestamp column must be named 'date' ---------------------------------------------------
+
 reformatted_df -- the df to reformat with data gaps filled
 time_delta -- the dataset's resolution (1-minute reporting period)
 set_index -- specify whether you want the dataframe returned by fc'n to have the index set (default False)
@@ -322,8 +340,6 @@ def fill_empty_rows(reformatted_df:pd.DataFrame, time_delta:timedelta, set_index
 
     blank_rows = [] # a list of lists
 
-    print(f"fill_empty_rows() BEFORE", reformatted_df.tail())
-
     for i in range(len(reformatted_df)-1):
         current_timestamp = reformatted_df['date'].iloc[i]
         next_timestamp = reformatted_df['date'].iloc[i+1]
@@ -339,8 +355,7 @@ def fill_empty_rows(reformatted_df:pd.DataFrame, time_delta:timedelta, set_index
         blank_rows_df = pd.DataFrame(blank_rows, columns=reformatted_df.columns)
         reformatted_df = pd.concat([reformatted_df, blank_rows_df]).sort_values('date').reset_index(drop=True)
 
-        print(f"fill_empty_rows() AFTER", reformatted_df.tail())
-        print()
+        reformatted_df.sort_values(by='date', inplace=True)
 
         if set_index: reformatted_df.set_index('date', inplace=True)
 

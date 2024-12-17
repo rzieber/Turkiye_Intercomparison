@@ -21,36 +21,6 @@ sys.path.append(str(Path(__file__).resolve().parents[2]))
 from resources import functions as func
 
 
-# Functions ===============================================================================
-
-"""
-Calculates the sea level pressure using observed station pressure and the station elevation (in meters).
-Returns a Series to be added as a column to the dataframe.
------
-df -- the dataframe for which to calculate sea level pressure
-alt -- the altitude of the station in meters
------
-
-Sea Level Pressure Approximation:
-    SLP = P x (1 + (alt/44330))^5.255                                    
-Where:
-    • P is the observed atmospheric pressure at the given altitutde.
-    • alt is the altitude above sea level in meters
-    • This constant is derived from the barometric formula and represents a scale height in meters. 
-       It is based on an average temperature and pressure profile of the atmosphere.
-    • This exponent is derived from the standard atmosphere model, which assumes a constant lapse rate 
-       and specific gas constant for dry air. It accounts for how pressure changes with altitude in a non-linear fashion.
-"""
-def calc_slp(df:pd.DataFrame, alt:int) -> pd.Series:
-    if not isinstance(df, pd.DataFrame):
-        raise TypeError(f"The calc_slp() function expects 'df' parameter to be of type <DataFrame>, passed: {type(df)}")
-    if not isinstance(alt, int):
-        raise TypeError(f"The calc_slp() function expects 'alt' parameter to be of type <int>, passed: {type(alt)}")
-    
-    return round(df["bmp2_pres"]*(293/(293-(alt*0.0065))), 1)
-    
-# =========================================================================================
-
 data_origin_partI = "/Users/rzieber/Documents/3D-PAWS/Turkiye/reformatted/CSV_Format/3DPAWS/complete_record/"
 data_origin_partII = "/Users/rzieber/Documents/3D-PAWS/Turkiye/raw/3DPAWS/Jan-2024_Nov-2024/"
 all_files_partI = sorted([file for file in Path(data_origin_partI).rglob('*') if file.is_file() and file.name != ".DS_Store"])
@@ -82,6 +52,7 @@ for file in all_files_partII:
 #     originalII_df = paws_dfs_partII[i]
 #     resampledII_df = originalII_df.sample(1000, random_state=42)
 #     paws_dfs_partII[i] = resampledII_df
+## This will not be compatible with data gap infilling. For reformatting only.
 
 print("Building reformatted dataframes for 2022 -> Jan. 2024.")
 
@@ -116,7 +87,6 @@ for df in paws_dfs_partI:
 
     # df.set_index('date', inplace=True)
 
-    # df.to_csv(f"/Users/rzieber/Downloads/TSMS0{i}_PartI.csv")
     paws_dfs_reformatted_partI.append(df)
 
     i += 1
@@ -137,7 +107,7 @@ for df in paws_dfs_partII:
                     "bmp_slp":"bmp2_slp", "bmp_pressure":"bmp2_pres", "bmp_temp":"bmp2_temp"}, 
             inplace=True
         ) 
-        df["bmp2_slp"] = calc_slp(df, 48) # Adana = 48 m
+        df["bmp2_slp"] = func.calc_slp(df, 48) # Adana = 48 m
         print(f"\t\tNo SLP data found for TSMS0{i} -- approximating\n\t\t(see Functions for methodology)")
     elif "htu21d_temp" in df.columns:
         df.rename(
@@ -161,7 +131,7 @@ for df in paws_dfs_partII:
                     "bmp_slp":"bmp2_slp", "bmp_pressure":"bmp2_pres", "bmp_temp":"bmp2_temp"}, 
             inplace=True
         )
-        df["bmp2_slp"] = calc_slp(df, 48) # Adana = 48 m
+        df["bmp2_slp"] = func.calc_slp(df, 48) # Adana = 48 m
         print(f"\t\tNo SLP data found for TSMS0{i} -- approximating\n\t\t(see Functions for methodology)")
     elif "sht31d_temp" in df.columns:
         df.rename(
@@ -205,7 +175,6 @@ for df in paws_dfs_partII:
     
     # df.set_index('date', inplace=True)
 
-    # df.to_csv(f"/Users/rzieber/Downloads/TSMS0{i}_PartII.csv")
     paws_dfs_reformatted_partII.append(df)
 
     i += 1
@@ -229,12 +198,5 @@ for i in range(len(paws_dfs_partI)):
 
     paws_dfs_partI[i] = gaps_filled_df_ptI
     paws_dfs_partII[i] = gaps_filled_df_ptII
-
-    # print(f"TSMS0{i} -- Initial")
-    # #print("\t1st:", paws_dfs_partI[i]['date'].iloc[0], "\t2nd:", paws_dfs_partI[i]['date'].iloc[-1])
-    # print(paws_dfs_partI[i].tail())
-    # print(f"TSMS0{i} -- Second")
-    # #print("\t1st:", paws_dfs_partII[i]['date'].iloc[0], "\t2nd:",paws_dfs_partII[i]['date'].iloc[-1])
-    # print(paws_dfs_partII[i].tail())
 
     i += 1
