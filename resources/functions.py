@@ -289,27 +289,13 @@ def _build_empty_row(columns:Index, missing_timestamp:Timestamp) -> list:
         raise TypeError(f"The build_empty_row() function expects 'columns' parameter to be of type <Index>, passed: {type(columns)}")
     if not isinstance(missing_timestamp, Timestamp):
         raise TypeError(f"The build_empty_row() function expects 'missing_timestamp' parameter to be of type <Timestamp>, passed: {type(missing_timestamp)}")
-    
-    row_builder_lookup = [ # all the possible column names
-        'bmp2_temp',np.nan,  'bmp2_pres',np.nan,  'bmp2_slp',np.nan,  'bme2_hum',np.nan,  'htu_temp',np.nan,  'htu_hum',np.nan,  
-        'mcp9808',np.nan,  'tipping',np.nan,  'wind_dir',np.nan,  'wind_speed',np.nan,  # 3D-PAWS
-
-        'year_month',np.nan,  'year_month_day',np.nan,  'year_month_day_hour',np.nan,
-
-        'temp',np.nan,  'humidity',np.nan,  'actual_pressure',np.nan,  'sea_level_pressure',np.nan,  'avg_wind_dir',np.nan,
-        'avg_wind_speed',np.nan,  'total_rainfall',np.nan  # TSMS
-    ] # using lookup table, even tho it's redundant, because it can check for missing columns
 
     next_row = [missing_timestamp]
+
     for col in columns:
-        if col == 'date':
-            continue
-        try:
-            index = row_builder_lookup.index(col)
-            next_row.append(row_builder_lookup[index+1])
-        except ValueError:
-            print(f"Could not find {col} in lookup table.")
-            sys.exit(1)
+        if col == 'date': continue
+
+        next_row.append(np.nan)
 
     return next_row
 
@@ -329,9 +315,14 @@ def fill_empty_rows(reformatted_df:pd.DataFrame, time_delta:timedelta, set_index
     if not isinstance(set_index, bool):
         raise ValueError(f"The fill_empty_row() function expects the 'set_index' parameter to be of type <bool>, received: {type(set_index)}")
 
+    nan_columns = reformatted_df.columns[reformatted_df.isna().all()]
+    if not nan_columns.empty: print("fill_empty_rows() -- Columns with all NaN values:", nan_columns.tolist())
+
     if 'date' not in reformatted_df.columns: reformatted_df.reset_index(inplace=True)
 
     blank_rows = [] # a list of lists
+
+    print(f"fill_empty_rows() BEFORE", reformatted_df.tail())
 
     for i in range(len(reformatted_df)-1):
         current_timestamp = reformatted_df['date'].iloc[i]
@@ -342,11 +333,15 @@ def fill_empty_rows(reformatted_df:pd.DataFrame, time_delta:timedelta, set_index
             new_row = _build_empty_row(reformatted_df.columns, current_timestamp)
             if new_row is not None:
                 blank_rows.append(new_row)
-            
-    if blank_rows:
+
+    if not blank_rows: return reformatted_df      
+    else:
         blank_rows_df = pd.DataFrame(blank_rows, columns=reformatted_df.columns)
         reformatted_df = pd.concat([reformatted_df, blank_rows_df]).sort_values('date').reset_index(drop=True)
 
-    if set_index: reformatted_df.set_index('date', inplace=True)
+        print(f"fill_empty_rows() AFTER", reformatted_df.tail())
+        print()
 
-    return reformatted_df
+        if set_index: reformatted_df.set_index('date', inplace=True)
+
+        return reformatted_df
