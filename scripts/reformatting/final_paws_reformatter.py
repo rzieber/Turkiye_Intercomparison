@@ -24,6 +24,7 @@ from resources import functions as func
 
 data_origin_partI = "/Users/rzieber/Documents/3D-PAWS/Turkiye/reformatted/CSV_Format/3DPAWS/2022-Jan2024/complete_record/"
 data_origin_partII = "/Users/rzieber/Documents/3D-PAWS/Turkiye/raw/3DPAWS/Jan-2024_Nov-2024/"
+
 all_files_partI = sorted([file for file in Path(data_origin_partI).rglob('*') if file.is_file() and file.name != ".DS_Store"])
 all_files_partII = sorted([file for file in Path(data_origin_partII).rglob('*') if file.is_file() and file.name != ".DS_Store"])
 
@@ -65,7 +66,6 @@ for df in paws_dfs_partI:
         inplace=True
     )
 
-            
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", pd.errors.SettingWithCopyWarning)
 
@@ -199,4 +199,16 @@ for i in range(len(dfs_gaps_filled_partI)):
     complete_record = pd.concat([df_partI, df_partII], axis=0, join='outer')
 
     complete_records.append(complete_record)
+
+print("Creating final CSV's")
+
+data_destination = "/Users/rzieber/Documents/3D-PAWS/Turkiye/reformatted/CSV_Format/3DPAWS/complete_dataperiod"
+i = 0
+for df in complete_records:
+    print(f"\tConverting TSMS0{i}")
+
+    file_path = os.path.join(data_destination, f"station_TSMS0{i}", f"TSMS0{i}_CompleteRecord.csv")
+    df.to_csv(file_path)
+
+    i += 1
 

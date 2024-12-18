@@ -114,3 +114,4 @@ def fill_empty_rows(reformatted_df:pd.DataFrame, time_delta:timedelta, set_index
         if set_index: reformatted_df.set_index('date', inplace=True)
 
         return reformatted_df
+    
