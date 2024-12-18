@@ -11,6 +11,7 @@ SLP approximation consistent across entire collective data period.
 ==========================================================================================
 """
 import sys
+import os
 import warnings
 import pandas as pd
 import numpy as np
@@ -21,41 +22,27 @@ sys.path.append(str(Path(__file__).resolve().parents[2]))
 from resources import functions as func
 
 
-data_origin_partI = "/Users/rzieber/Documents/3D-PAWS/Turkiye/reformatted/CSV_Format/3DPAWS/complete_record/"
+data_origin_partI = "/Users/rzieber/Documents/3D-PAWS/Turkiye/reformatted/CSV_Format/3DPAWS/2022-Jan2024/complete_record/"
 data_origin_partII = "/Users/rzieber/Documents/3D-PAWS/Turkiye/raw/3DPAWS/Jan-2024_Nov-2024/"
 all_files_partI = sorted([file for file in Path(data_origin_partI).rglob('*') if file.is_file() and file.name != ".DS_Store"])
 all_files_partII = sorted([file for file in Path(data_origin_partII).rglob('*') if file.is_file() and file.name != ".DS_Store"])
 
-paws_dfs_partI = [] 
-paws_dfs_reformatted_partI = []
-paws_dfs_partII = []
-paws_dfs_reformatted_partII = []
-
 print("Building initial dataframes.")
 
+paws_dfs_partI = [] 
 for file in all_files_partI:
     paws_dfs_partI.append(
         pd.read_csv(file, low_memory=False)
     )
+paws_dfs_partII = []
 for file in all_files_partII:
     paws_dfs_partII.append(
         pd.read_csv(file, low_memory=False)
     )
 
-# print("Resampling for development purposes < ------------------------------------ disable when done")
-
-# for i in range(len(paws_dfs_partI)):
-#     originalI_df = paws_dfs_partI[i]
-#     resampledI_df = originalI_df.sample(1000, random_state=42)
-#     paws_dfs_partI[i] = resampledI_df
-
-#     originalII_df = paws_dfs_partII[i]
-#     resampledII_df = originalII_df.sample(1000, random_state=42)
-#     paws_dfs_partII[i] = resampledII_df
-## This will not be compatible with data gap infilling. For reformatting only.
-
 print("Building reformatted dataframes for 2022 -> Jan. 2024.")
 
+paws_dfs_reformatted_partI = []
 i = 0
 for df in paws_dfs_partI:
     print(f"\tReformatting TSMS0{i}")
@@ -77,6 +64,7 @@ for df in paws_dfs_partI:
         axis=1, 
         inplace=True
     )
+
             
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", pd.errors.SettingWithCopyWarning)
@@ -84,23 +72,21 @@ for df in paws_dfs_partI:
         df['year_month'] = df['date'].dt.to_period('M')
         df['year_month_day'] = df['date'].dt.to_period('D')
         df['year_month_day_hour'] = df['date'].dt.to_period('H')
-
-    # df.set_index('date', inplace=True)
-
-    paws_dfs_reformatted_partI.append(df)
+    
+    paws_dfs_reformatted_partI.append(df.drop_duplicates(subset='date', keep='first'))
 
     i += 1
 
-
 print("Building reformatted dataframes for Jan. 2024 -> Nov. 2024.")
 
+paws_dfs_reformatted_partII = []
 i = 0
 for df in paws_dfs_partII:
     print(f"\tReformatting TSMS0{i}")
 
     df.columns = df.columns.str.strip()
 
-    if ("htu21d_temp" in df.columns) and ("bmp_slp" not in df.columns):                             # CHORDS variables have so many fun quirks ¯\(°_o)/¯
+    if ("htu21d_temp" in df.columns) and ("bmp_slp" not in df.columns): # CHORDS variables have so many fun quirks ¯\(°_o)/¯
         df.rename(
             columns={"time":"date", "rain":"tipping", "wind_direction":"wind_dir",
                     "htu21d_temp":"htu_temp", "htu21d_humidity":"htu_hum",
@@ -146,7 +132,6 @@ for df in paws_dfs_partII:
     
     df['bme2_hum'] = np.nan
         
-    # no reference data for these col's OR no data exists in these columns (e.g. sth) OR scalar (e.g. alt)
     if all(col in df.columns for col in ['wg', 'wgd', 'wgd_compass_dir']):
         df.drop(   
             ['si1145_vis', 'si1145_ir', 'si1145_uv', 'wind_direction_compass_dir', 
@@ -172,31 +157,46 @@ for df in paws_dfs_partII:
         df['year_month'] = df['date'].dt.to_period('M')
         df['year_month_day'] = df['date'].dt.to_period('D')
         df['year_month_day_hour'] = df['date'].dt.to_period('H')
-    
-    # df.set_index('date', inplace=True)
 
-    paws_dfs_reformatted_partII.append(df)
+    paws_dfs_reformatted_partII.append(df.drop_duplicates(subset='date', keep='first'))
 
     i += 1
 
 print("Filling in datagaps.")
 
-i = 0
-for i in range(len(paws_dfs_partI)):
+dfs_gaps_filled_partI = []
+dfs_gaps_filled_partII = []
+for i in range(len(paws_dfs_reformatted_partI)):
     print(f"\tFilling TSMS0{i}")
-
-    num_empty_rows_ptI = paws_dfs_partI[i]['date'].isna().sum()
-    num_empty_rows_ptII = paws_dfs_partII[i]['date'].isna().sum()
-    if not num_empty_rows_ptI == 0: print("Number of empty rows found part I:", num_empty_rows_ptI)
-    if not num_empty_rows_ptII == 0: print("Number of empty rows found part II:", num_empty_rows_ptII)
 
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", category=FutureWarning)
 
-        gaps_filled_df_ptI = func.fill_empty_rows(paws_dfs_partI[i], timedelta(minutes=1))
-        gaps_filled_df_ptII = func.fill_empty_rows(paws_dfs_partII[i], timedelta(minutes=1))
+        gaps_filled_df_ptI = func.fill_empty_rows(paws_dfs_reformatted_partI[i], timedelta(minutes=1))
+        gaps_filled_df_ptII = func.fill_empty_rows(paws_dfs_reformatted_partII[i], timedelta(minutes=1))
 
-    paws_dfs_partI[i] = gaps_filled_df_ptI
-    paws_dfs_partII[i] = gaps_filled_df_ptII
+    dfs_gaps_filled_partI.append(gaps_filled_df_ptI)
+    dfs_gaps_filled_partII.append(gaps_filled_df_ptII)
 
-    i += 1
+print("Merging 1st and 2nd data periods.")
+
+complete_records = []
+for i in range(len(dfs_gaps_filled_partI)):
+    print(f"\tMerging TSMS0{i}")
+
+    df_partI = dfs_gaps_filled_partI[i]
+    df_partII = dfs_gaps_filled_partII[i]
+
+    # account for sd card & chords 1-minute offset (sd card timestamps 1 minute AHEAD of chords)
+    with warnings.catch_warnings():
+            warnings.simplefilter("ignore", pd.errors.SettingWithCopyWarning)
+
+            last_timestamp = df_partI['date'].iloc[-1]
+            last_timestamp += timedelta(minutes=2)
+            df_partII = df_partII[df_partII['date'] >= last_timestamp]
+            df_partII['date'] = df_partII['date'] - timedelta(minutes=1)
+
+    complete_record = pd.concat([df_partI, df_partII], axis=0, join='outer')
+
+    complete_records.append(complete_record)
+
