@@ -1,5 +1,6 @@
 # Data Intercomparison Study
 Validate 3D-PAWS weather station data quality against TSMS co-located commerical weather station records.
+Data Period: Aug. 2022 -> Nov. 2024
 
 ### Data Reformatting
 Reformatting scripts which process raw SD Card data as well as CHORDS data are located in  'scripts/reformatting/'.
