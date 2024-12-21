@@ -27,6 +27,9 @@ Where:
        It is based on an average temperature and pressure profile of the atmosphere.
     • This exponent is derived from the standard atmosphere model, which assumes a constant lapse rate 
        and specific gas constant for dry air. It accounts for how pressure changes with altitude in a non-linear fashion.
+
+NOTE: For 3D-PAWS data, the BMP sensor approximates altitude based on observed air pressure using the barometric formula.
+      It is recommended that the altitude listed on the CHORDS website for the associated site be used over the BMP approximation.
 """
 def calc_slp(df:pd.DataFrame, alt:int) -> float:
     if not isinstance(df, pd.DataFrame):

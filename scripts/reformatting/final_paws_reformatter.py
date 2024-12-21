@@ -3,6 +3,13 @@
 Uses the reformatted 3D-PAWS data from 2022 -> Jan. 2024 and combines the remaining data
 from Jan. 2024 - Nov. 2024. 
 
+To be used in conjunction with the filegen script.
+1. final_paws_reformatter.py
+2. final_paws_filegen.py
+
+Where the data DESTINATION in step 1 is the data ORIGIN in step 2.
+
+
 2022 - Jan. 2024 data origin: SD card
 Jan. 2024 - Nov. 2024 data origin: CHORDS
 1-minute timestamp offset between these two datasets
@@ -21,6 +28,7 @@ from datetime import timedelta
 sys.path.append(str(Path(__file__).resolve().parents[2]))
 from resources import functions as func
 
+data_destination = "/Users/rzieber/Documents/3D-PAWS/Turkiye/reformatted/CSV_Format/3DPAWS/Aug2022-Nov2024/FINAL"
 
 data_origin_partI = "/Users/rzieber/Documents/3D-PAWS/Turkiye/reformatted/CSV_Format/3DPAWS/2022-Jan2024/complete_record/"
 data_origin_partII = "/Users/rzieber/Documents/3D-PAWS/Turkiye/raw/3DPAWS/Jan-2024_Nov-2024/"
@@ -60,8 +68,8 @@ for df in paws_dfs_partI:
         except Exception as e:
             print(f"Error converting date for TSMS0{i}: {e}")
 
-    df.drop(   # no reference data for these col's OR no data exists in these columns (e.g. sth) OR scalar (e.g. alt)
-        ['int', 'sth_temp', 'sth_hum', 'bmp2_alt', 'vis_light', 'ir_light', 'uv_light', 'year', 'month', 'day', 'hour', 'minute'], 
+    df.drop(
+        ['year', 'month', 'day', 'hour', 'minute'], 
         axis=1, 
         inplace=True
     )
@@ -109,6 +117,13 @@ for df in paws_dfs_partII:
                     "bmp_slp":"bmp2_slp", "bmp_pressure":"bmp2_pres", "bmp_temp":"bmp2_temp"}, 
             inplace=True
         ) 
+    elif "sth31d_humidity" in df.columns:
+        df.rename(
+            columns={"time":"date", "rain":"tipping", "wind_direction":"wind_dir",
+                    "sth31d_temp":"htu_temp", "sth31d_humidity":"htu_hum",
+                    "bmp_slp":"bmp2_slp", "bmp_pressure":"bmp2_pres", "bmp_temp":"bmp2_temp"}, 
+            inplace=True
+        ) 
     elif ("sht31d_temp" in df.columns) and ("bmp_slp" not in df.columns):
         
         df.rename(
@@ -119,7 +134,7 @@ for df in paws_dfs_partII:
         )
         df["bmp2_slp"] = func.calc_slp(df, 48) # Adana = 48 m
         print(f"\t\tNo SLP data found for TSMS0{i} -- approximating\n\t\t(see Functions for methodology)")
-    elif "sht31d_temp" in df.columns:
+    elif "sht31d_humidity" in df.columns:
         df.rename(
             columns={"time":"date", "rain":"tipping", "wind_direction":"wind_dir",
                     "sht31d_temp":"htu_temp", "sht31d_humidity":"htu_hum",
@@ -131,6 +146,8 @@ for df in paws_dfs_partII:
         print(f"Headers identified for TSMS{i}:", df.columns)
     
     df['bme2_hum'] = np.nan
+    df['sth_temp'] = np.nan
+    df['sth_hum'] = np.nan
         
     if all(col in df.columns for col in ['wg', 'wgd', 'wgd_compass_dir']):
         df.drop(   
@@ -166,6 +183,7 @@ print("Filling in datagaps.")
 
 dfs_gaps_filled_partI = []
 dfs_gaps_filled_partII = []
+
 for i in range(len(paws_dfs_reformatted_partI)):
     print(f"\tFilling TSMS0{i}")
 
@@ -177,7 +195,7 @@ for i in range(len(paws_dfs_reformatted_partI)):
 
     dfs_gaps_filled_partI.append(gaps_filled_df_ptI)
     dfs_gaps_filled_partII.append(gaps_filled_df_ptII)
-
+    
 print("Merging 1st and 2nd data periods.")
 
 complete_records = []
@@ -187,7 +205,7 @@ for i in range(len(dfs_gaps_filled_partI)):
     df_partI = dfs_gaps_filled_partI[i]
     df_partII = dfs_gaps_filled_partII[i]
 
-    # account for sd card & chords 1-minute offset (sd card timestamps 1 minute AHEAD of chords)
+    # account for sd card & chords 1-minute offset --> sd card timestamps 1 minute AHEAD of chords
     with warnings.catch_warnings():
             warnings.simplefilter("ignore", pd.errors.SettingWithCopyWarning)
 
@@ -202,10 +220,11 @@ for i in range(len(dfs_gaps_filled_partI)):
 
 print("Creating final CSV's")
 
-data_destination = "/Users/rzieber/Documents/3D-PAWS/Turkiye/reformatted/CSV_Format/3DPAWS/complete_dataperiod"
 i = 0
 for df in complete_records:
     print(f"\tConverting TSMS0{i}")
+
+    df['sth_hum'] = np.nan
 
     file_path = os.path.join(data_destination, f"station_TSMS0{i}", f"TSMS0{i}_CompleteRecord.csv")
     df.to_csv(file_path)
