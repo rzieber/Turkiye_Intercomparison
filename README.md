@@ -1,5 +1,14 @@
-This script processes raw station data for 9 stations located throughout Turkey. 
+# Data Intercomparison Study
+Validate 3D-PAWS weather station data quality against TSMS co-located commerical weather station records.
 
-There are 2 formats: Python's JSON interpretation, and TSV's. This script suite handles both cases. The stations requiring JSON processing are located at Adana and so will utilize the scripts prefixed with 'Adana'.
+# Data Reformatting
+Reformatting scripts which process raw SD Card data as well as CHORDS data are located in  'scripts/reformatting/'.
 
-For data archive produced by this script, go to https://drive.google.com/drive/folders/1oIxXJ-Jgy9p2tXzCzd-HjMljGhT8N5xT?usp=drive_link
+# Data Exploration
+Plots used to visually explore this dataset can be found in  'scripts/plots/'.
+
+# Outliers
+Outlier analysis products and procedures can be found in  'scripts/outliers/'.
+
+# Dev
+Programming utilities can be found in  'resources/'.
