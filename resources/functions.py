@@ -4,7 +4,6 @@ from json import loads
 import numpy as np
 import pandas as pd
 from pandas import Index, Timestamp
-#from .classes import TimestampError
 from datetime import datetime, timedelta
 import sys
 
@@ -12,32 +11,48 @@ import sys
 
 """
 Calculates the sea level pressure using observed station pressure and the station elevation (in meters).
-Returns a float rounded to one decimal place to be added into the dataframe.
------
+Returns a new df column rounded to one decimal place to be added into the dataframe.
+Ignores temperature and pressure readings of -999.99
+-----------------------------------------------------------------
 df -- the dataframe for which to calculate sea level pressure
-alt -- the altitude of the station in meters
------
+alt -- the altitude of the station (m)
+temp -- the name of the column in dataframe for temperature (˚C)
+pres -- the name of the column in dataframe for observed pressure (hPa)
+-----------------------------------------------------------------
 
 Sea Level Pressure Approximation:
-    SLP = P x (1 + (alt/44330))^5.255                                    
+    SLP = P*pow(1-(0.0065*A)/(T+0.0065*A+273.15),-5.257)                                
 Where:
     • P is the observed atmospheric pressure at the given altitutde.
-    • alt is the altitude above sea level in meters
-    • This constant is derived from the barometric formula and represents a scale height in meters. 
-       It is based on an average temperature and pressure profile of the atmosphere.
-    • This exponent is derived from the standard atmosphere model, which assumes a constant lapse rate 
-       and specific gas constant for dry air. It accounts for how pressure changes with altitude in a non-linear fashion.
+    • A is the altitude above sea level in meters
+    • T is the temperature at the station in ˚C
+    • The constant 0.0065 represents the temperature lapse rate, 
+       which is approximately 6.5˚C per 1000 meters in the troposphere.
+    • The exponent -5.257 arises from the physics of atmospheric pressure changes, 
+       specifically from the gas laws and hydrostatic equilibrium equations.
 
 NOTE: For 3D-PAWS data, the BMP sensor approximates altitude based on observed air pressure using the barometric formula.
       It is recommended that the altitude listed on the CHORDS website for the associated site be used over the BMP approximation.
 """
-def calc_slp(df:pd.DataFrame, alt:int) -> float:
+def calc_slp(df:pd.DataFrame, alt:int, temp:str, pres:str):
     if not isinstance(df, pd.DataFrame):
         raise TypeError(f"The calc_slp() function expects 'df' parameter to be of type <DataFrame>, passed: {type(df)}")
     if not isinstance(alt, int):
         raise TypeError(f"The calc_slp() function expects 'alt' parameter to be of type <int>, passed: {type(alt)}")
+    if not isinstance(temp, str):
+        raise TypeError(f"The calc_slp() function expects 'temp' parameter to be of type <str>, passed: {type(temp)}")
+    if not isinstance(pres, str):
+        raise TypeError(f"The calc_slp() function expects 'pres' parameter to be of type <str>, passed: {type(pres)}")
     
-    return round(df["bmp2_pres"]*(293/(293-(alt*0.0065))), 1)
+    pres_mask = df[pres] != -999.99
+    temp_mask = df[temp] != -999.99
+    valid_mask = pres_mask & temp_mask
+
+    slp_col =  round(df[pres]*pow(1-(0.0065*alt)/(df[temp]+0.0065*alt+273.15),-5.257), 1)
+
+    slp_col[~valid_mask] = np.nan
+
+    return slp_col
 
 
 """

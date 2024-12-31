@@ -3,18 +3,19 @@
 Uses the reformatted 3D-PAWS data from 2022 -> Jan. 2024 and combines the remaining data
 from Jan. 2024 - Nov. 2024. 
 
-To be used in conjunction with the filegen script.
-1. final_paws_reformatter.py
-2. final_paws_filegen.py
-
+To be used in conjunction with the filegen script:
+    Step 1. Run final_paws_reformatter.py
+    Step 2. Run final_paws_filegen.py
 Where the data DESTINATION in step 1 is the data ORIGIN in step 2.
 
 
 2022 - Jan. 2024 data origin: SD card
 Jan. 2024 - Nov. 2024 data origin: CHORDS
-1-minute timestamp offset between these two datasets
+1-minute timestamp offset between these two datasets accounted for.
 
-SLP approximation consistent across entire collective data period.
+SLP approximation calculated onboard RPi's (instruments 0-5) and calculated here
+for instruments 6-8 at Adana, which use Particle dataloggers.
+SLP approx. methodology is consistent between RPi's & Particle's (see functions.py)
 ==========================================================================================
 """
 import sys
@@ -28,7 +29,8 @@ from datetime import timedelta
 sys.path.append(str(Path(__file__).resolve().parents[2]))
 from resources import functions as func
 
-data_destination = "/Users/rzieber/Documents/3D-PAWS/Turkiye/reformatted/CSV_Format/3DPAWS/Aug2022-Nov2024/FINAL"
+
+data_destination = "/Users/rzieber/Documents/3D-PAWS/Turkiye/reformatted/CSV_Format/3DPAWS/Aug2022-Nov2024"
 
 data_origin_partI = "/Users/rzieber/Documents/3D-PAWS/Turkiye/reformatted/CSV_Format/3DPAWS/2022-Jan2024/complete_record/"
 data_origin_partII = "/Users/rzieber/Documents/3D-PAWS/Turkiye/raw/3DPAWS/Jan-2024_Nov-2024/"
@@ -60,7 +62,7 @@ for df in paws_dfs_partI:
 
     df.rename(columns={"mon":"month", "min":"minute"}, inplace=True)
 
-    with warnings.catch_warnings(): # supress warning from printing to the console
+    with warnings.catch_warnings(): # supress warnings from printing to the console
         warnings.simplefilter("ignore", pd.errors.SettingWithCopyWarning)
         
         try:
@@ -73,6 +75,8 @@ for df in paws_dfs_partI:
         axis=1, 
         inplace=True
     )
+
+    if i in [6,7,8]: df['bmp2_slp'] = func.calc_slp(df, 48, 'mcp9808', 'bmp2_pres')
 
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", pd.errors.SettingWithCopyWarning)
@@ -101,7 +105,7 @@ for df in paws_dfs_partII:
                     "bmp_slp":"bmp2_slp", "bmp_pressure":"bmp2_pres", "bmp_temp":"bmp2_temp"}, 
             inplace=True
         ) 
-        df["bmp2_slp"] = func.calc_slp(df, 48) # Adana = 48 m
+        df["bmp2_slp"] = func.calc_slp(df, 48, "mcp9808", "bmp2_pres")
         print(f"\t\tNo SLP data found for TSMS0{i} -- approximating\n\t\t(see Functions for methodology)")
     elif "htu21d_temp" in df.columns:
         df.rename(
@@ -132,7 +136,7 @@ for df in paws_dfs_partII:
                     "bmp_slp":"bmp2_slp", "bmp_pressure":"bmp2_pres", "bmp_temp":"bmp2_temp"}, 
             inplace=True
         )
-        df["bmp2_slp"] = func.calc_slp(df, 48) # Adana = 48 m
+        df["bmp2_slp"] = func.calc_slp(df, 48, 'mcp9808', 'bmp2_pres')
         print(f"\t\tNo SLP data found for TSMS0{i} -- approximating\n\t\t(see Functions for methodology)")
     elif "sht31d_humidity" in df.columns:
         df.rename(
@@ -230,4 +234,3 @@ for df in complete_records:
     df.to_csv(file_path)
 
     i += 1
-
