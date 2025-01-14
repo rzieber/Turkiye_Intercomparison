@@ -27,6 +27,7 @@ project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(_
 sys.path.append(project_root)
 
 data_origin = r"/Users/rzieber/Documents/3D-PAWS/Turkiye/output/"
+
 #data_destination = r"/Users/rzieber/Documents/3D-PAWS/Turkiye/plots/time_series/complete_records/"
 #data_destination = r"/Users/rzieber/Documents/3D-PAWS/Turkiye/plots/time_series/monthly_plots/"
 #data_destination = r"/Users/rzieber/Documents/3D-PAWS/Turkiye/plots/time_series/temp_comparison/3DPAWS_and_TSMS/monthly_plots_2/"
@@ -53,7 +54,7 @@ variable_mapper = { # TSMS : 3DPAWS
     "actual_pressure":"bmp2_pres",
     "sea_level_pressure":"bmp2_slp",
     "avg_wind_dir":"wind_dir", # both using 1-minute average
-    "avg_wind_speed":"wind_speed", # both usng 1-minute average
+    "avg_wind_speed":"wind_speed", # both using 1-minute average
     "total_rainfall":"tipping"
 }
 station_directories = [
@@ -85,30 +86,6 @@ for i in range(len(station_directories)):
 # -------------------------------------------------------------------------------------------------------------------------------
 paws_dfs = []
 tsms_dfs = []
-
-# # Define a function to create a Bland-Altman plot for two sensors ======================================================================= COMMENT OUT WHEN DONE
-# def bland_altman_plot(sensor_a, sensor_b, label_a, label_b, type=str, save_path=str):
-#     mean_values = (sensor_a + sensor_b) / 2
-#     differences = sensor_a - sensor_b
-#     mean_diff = np.mean(differences)
-#     std_diff = np.std(differences)
-
-#     filename = f"{station_directories[i][8:14]}_BlandAltman_{label_a[:3]}_vs_{label_b[:3]}_{type}.png"
-
-#     plt.figure(figsize=(20, 12))
-#     plt.scatter(mean_values, differences, alpha=0.5)
-#     plt.axhline(mean_diff, color='red', linestyle='--', label='Mean Difference')
-#     plt.axhline(mean_diff + 1.96 * std_diff, color='blue', linestyle='--', label='+1.96 SD')
-#     plt.axhline(mean_diff - 1.96 * std_diff, color='blue', linestyle='--', label='-1.96 SD')
-#     plt.xlabel(f'Mean of {label_a} and {label_b}')
-#     plt.ylabel(f'Difference between {label_a} and {label_b}')
-#     plt.title(f'Bland-Altman Plot [{type.upper()}]: {label_a} vs {label_b}')
-
-#     plt.tight_layout()
-#     plt.savefig(data_destination+station_directories[i]+save_path+filename)
-#     plt.clf()
-#     plt.close()
-#     # =========================================================================================================================================================
 
 for i in range(len(station_directories)):
     """
@@ -458,7 +435,7 @@ for i in range(len(station_directories)):
     # tsms_df_FILTERED = tsms_df[paws_df.index[0]:paws_df.index[-1]]
     
     # paws_df_FILTERED = paws_df.replace(-999.99, np.nan)
-    #tsms_df_FILTERED = tsms_df_FILTERED.replace(-999.99, np.nan, inplace=True)
+    # tsms_df_FILTERED = tsms_df_FILTERED.replace(-999.99, np.nan, inplace=True)
 
     # paws_df_FILTERED = paws_df[
     #     (paws_df[f"bmp2_temp"] != -999.99) & (paws_df['htu_temp'] != -999.99) & (paws_df['mcp9808'] != -999.99)
@@ -466,7 +443,7 @@ for i in range(len(station_directories)):
     # paws_df_FILTERED = paws_df_FILTERED[paws_df_FILTERED['htu_temp'] > -50.0]
     # paws_df_FILTERED = paws_df_FILTERED[paws_df_FILTERED['mcp9808'] > -50.0]    
 
-    #paws_df_FILTERED.to_csv(f'/Users/rzieber/Downloads/{station_directories[i][8:14]}_paws_df_filtered.csv')
+    # paws_df_FILTERED.to_csv(f'/Users/rzieber/Downloads/{station_directories[i][8:14]}_paws_df_filtered.csv')
 
     # tsms_df_FILTERED = tsms_df_FILTERED[
     #     (tsms_df_FILTERED['temp'] > -50.0)
@@ -499,87 +476,87 @@ for i in range(len(station_directories)):
     #     plt.close()
 
 
-    """
-    =============================================================================================================================
-    Create wind rose plots of the 3D PAWS station data as well as the TSMS reference station. COMPLETE RECORDS
-    =============================================================================================================================
-    """
-    # 3D PAWS  ------------------------------------------------------------------------------------------------------------------
-    print("3D PAWS -- nulls filtered")
-    paws_df.reset_index(inplace=True)
-    paws_df['date'] = pd.to_datetime(paws_df['date'])
+    # """
+    # =============================================================================================================================
+    # Create wind rose plots of the 3D PAWS station data as well as the TSMS reference station. COMPLETE RECORDS
+    # =============================================================================================================================
+    # """
+    # # 3D PAWS  ------------------------------------------------------------------------------------------------------------------
+    # print("3D PAWS -- nulls filtered")
+    # paws_df.reset_index(inplace=True)
+    # paws_df['date'] = pd.to_datetime(paws_df['date'])
 
-    # Convert the 'wind_speed' column to numeric, forcing errors to NaN
-    paws_df['wind_speed'] = pd.to_numeric(paws_df['wind_speed'], errors='coerce')
+    # # Convert the 'wind_speed' column to numeric, forcing errors to NaN
+    # paws_df['wind_speed'] = pd.to_numeric(paws_df['wind_speed'], errors='coerce')
 
-    # Filter out rows where 'wind_speed' is NaN
-    paws_df_FILTERED = paws_df[
-        ((paws_df["wind_speed"].notna()) & (paws_df["wind_speed"] >= 0))
-        ]
-    paws_df_FILTERED = paws_df_FILTERED[paws_df_FILTERED["wind_speed"] >= 3.0] # filter out variable winds 6 knots
-    paws_df_FILTERED.set_index('date', inplace=True)
+    # # Filter out rows where 'wind_speed' is NaN
+    # paws_df_FILTERED = paws_df[
+    #     ((paws_df["wind_speed"].notna()) & (paws_df["wind_speed"] >= 0))
+    #     ]
+    # paws_df_FILTERED = paws_df_FILTERED[paws_df_FILTERED["wind_speed"] >= 3.0] # filter out variable winds 6 knots
+    # paws_df_FILTERED.set_index('date', inplace=True)
 
-    # wind_speed_bins = [0, 2.0, 4.0, 6.0, 8.0, 10.0]       # for variable winds
-    # labels = ['0-2.0 m/s', '2.0-4.0 m/s', '4.0-6.0 m/s', '6.0-8.0 m/s', '8.0-10.0 m/s']
-    wind_speed_bins = [2.0, 4.0, 6.0, 8.0, 10.0]         # for non-variable winds
-    labels = ['2.0-4.0 m/s', '4.0-6.0 m/s', '6.0-8.0 m/s', '8.0-10.0 m/s']
+    # # wind_speed_bins = [0, 2.0, 4.0, 6.0, 8.0, 10.0]       # for variable winds
+    # # labels = ['0-2.0 m/s', '2.0-4.0 m/s', '4.0-6.0 m/s', '6.0-8.0 m/s', '8.0-10.0 m/s']
+    # wind_speed_bins = [2.0, 4.0, 6.0, 8.0, 10.0]         # for non-variable winds
+    # labels = ['2.0-4.0 m/s', '4.0-6.0 m/s', '6.0-8.0 m/s', '8.0-10.0 m/s']
 
-    first_timestamp = paws_df_FILTERED.index[0]
-    last_timestamp = paws_df_FILTERED.index[-1]
-    # first_timestamp = pd.Timestamp("2022-09-09 00:00") # for reproducing TSMS study period
-    # last_timestamp = pd.Timestamp("2023-02-24 12:42")
+    # first_timestamp = paws_df_FILTERED.index[0]
+    # last_timestamp = paws_df_FILTERED.index[-1]
+    # # first_timestamp = pd.Timestamp("2022-09-09 00:00") # for reproducing TSMS study period
+    # # last_timestamp = pd.Timestamp("2023-02-24 12:42")
 
-    paws_df_FILTERED.loc[:, 'wind_speed_category'] = pd.cut(paws_df_FILTERED['wind_speed'], bins=wind_speed_bins, labels=labels, right=False)
+    # paws_df_FILTERED.loc[:, 'wind_speed_category'] = pd.cut(paws_df_FILTERED['wind_speed'], bins=wind_speed_bins, labels=labels, right=False)
 
-    ax = WindroseAxes.from_ax()
-    ax.bar(paws_df_FILTERED['wind_dir'], paws_df_FILTERED['wind_speed'], normed=True, opening=0.8, edgecolor='white', bins=wind_speed_bins)
-    ax.set_legend(title=f"{station_directories[i][8:len(station_directories[i])-1]} Wind Rose")
+    # ax = WindroseAxes.from_ax()
+    # ax.bar(paws_df_FILTERED['wind_dir'], paws_df_FILTERED['wind_speed'], normed=True, opening=0.8, edgecolor='white', bins=wind_speed_bins)
+    # ax.set_legend(title=f"{station_directories[i][8:len(station_directories[i])-1]} Wind Rose")
 
-    # ax.set_rmax(35)
-    # ax.set_yticks([7, 14, 21, 28, 35])
-    # ax.set_yticklabels(['7%', '14%', '21%', '28%', '35%']) # for complete records
-    ax.set_rmax(80)
-    ax.set_yticks([16, 32, 48, 64, 80])
-    ax.set_yticklabels(['16%', '32%', '48%', '64%', '80%']) # for complete records w/ non-variable winds
+    # # ax.set_rmax(35)
+    # # ax.set_yticks([7, 14, 21, 28, 35])
+    # # ax.set_yticklabels(['7%', '14%', '21%', '28%', '35%']) # for complete records
+    # ax.set_rmax(80)
+    # ax.set_yticks([16, 32, 48, 64, 80])
+    # ax.set_yticklabels(['16%', '32%', '48%', '64%', '80%']) # for complete records w/ non-variable winds
         
-    ax.grid(True, linewidth=0.5)  # Thinner grid lines can improve readability
+    # ax.grid(True, linewidth=0.5)  # Thinner grid lines can improve readability
 
-    plt.savefig(data_destination+station_directories[i]+f"wind/filtered_nulls/{station_directories[i][8:14]}_3DPAWS_windrose_FILTERED.png")
-    plt.clf()
-    plt.close()
+    # plt.savefig(data_destination+station_directories[i]+f"wind/filtered_nulls/{station_directories[i][8:14]}_3DPAWS_windrose_FILTERED.png")
+    # plt.clf()
+    # plt.close()
 
     
-    # TSMS ----------------------------------------------------------------------------------------------------------------------
-    print("TSMS -- raw")
-    tsms_df.reset_index(inplace=True)
-    tsms_df['date'] = pd.to_datetime(tsms_df['date'])
+    # # TSMS ----------------------------------------------------------------------------------------------------------------------
+    # print("TSMS -- raw")
+    # tsms_df.reset_index(inplace=True)
+    # tsms_df['date'] = pd.to_datetime(tsms_df['date'])
 
-    tsms_df_FILTERED = tsms_df[
-        ~((tsms_df['avg_wind_speed'] == 0.0) & (tsms_df['avg_wind_dir'] == 0.0)) # filter out 0.0 pair wind speed & dir
-        ] 
-    tsms_df_FILTERED = tsms_df_FILTERED[tsms_df_FILTERED['avg_wind_speed'] >= 3.0] # filter out variable winds
-    tsms_df_FILTERED.set_index('date', inplace=True)
+    # tsms_df_FILTERED = tsms_df[
+    #     ~((tsms_df['avg_wind_speed'] == 0.0) & (tsms_df['avg_wind_dir'] == 0.0)) # filter out 0.0 pair wind speed & dir
+    #     ] 
+    # tsms_df_FILTERED = tsms_df_FILTERED[tsms_df_FILTERED['avg_wind_speed'] >= 3.0] # filter out variable winds
+    # tsms_df_FILTERED.set_index('date', inplace=True)
 
-    tsms_subset = tsms_df_FILTERED.loc[first_timestamp:last_timestamp]
+    # tsms_subset = tsms_df_FILTERED.loc[first_timestamp:last_timestamp]
 
-    tsms_subset.loc[:, 'wind_speed_category'] = pd.cut(tsms_subset['avg_wind_speed'], bins=wind_speed_bins, labels=labels, right=False)
+    # tsms_subset.loc[:, 'wind_speed_category'] = pd.cut(tsms_subset['avg_wind_speed'], bins=wind_speed_bins, labels=labels, right=False)
 
-    ax = WindroseAxes.from_ax() # TSMS data was already cleaned
-    ax.bar(tsms_subset['avg_wind_dir'], tsms_subset['avg_wind_speed'], normed=True, opening=0.8, edgecolor='white', bins=wind_speed_bins)
-    ax.set_legend(title=f"TSMS Wind Rose")
+    # ax = WindroseAxes.from_ax() # TSMS data was already cleaned
+    # ax.bar(tsms_subset['avg_wind_dir'], tsms_subset['avg_wind_speed'], normed=True, opening=0.8, edgecolor='white', bins=wind_speed_bins)
+    # ax.set_legend(title=f"TSMS Wind Rose")
     
-    # ax.set_rmax(35)
-    # ax.set_yticks([7, 14, 21, 28, 35])
-    # ax.set_yticklabels(['7%', '14%', '21%', '28%', '35%']) # for complete records
-    ax.set_rmax(80)
-    ax.set_yticks([16, 32, 48, 64, 80])
-    ax.set_yticklabels(['16%', '32%', '48%', '64%', '80%']) # for non-variable winds
+    # # ax.set_rmax(35)
+    # # ax.set_yticks([7, 14, 21, 28, 35])
+    # # ax.set_yticklabels(['7%', '14%', '21%', '28%', '35%']) # for complete records
+    # ax.set_rmax(80)
+    # ax.set_yticks([16, 32, 48, 64, 80])
+    # ax.set_yticklabels(['16%', '32%', '48%', '64%', '80%']) # for non-variable winds
 
-    ax.grid(True, linewidth=0.5)  # Thinner grid lines can improve readability
+    # ax.grid(True, linewidth=0.5)  # Thinner grid lines can improve readability
 
-    plt.savefig(data_destination+station_directories[i]+f"wind/raw/{station_directories[i][8:14]}_windrose.png")
-    plt.clf()
-    plt.close()
+    # plt.savefig(data_destination+station_directories[i]+f"wind/raw/{station_directories[i][8:14]}_windrose.png")
+    # plt.clf()
+    # plt.close()
        
 
     """

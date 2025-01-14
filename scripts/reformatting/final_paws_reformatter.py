@@ -16,6 +16,9 @@ Jan. 2024 - Nov. 2024 data origin: CHORDS
 SLP approximation calculated onboard RPi's (instruments 0-5) and calculated here
 for instruments 6-8 at Adana, which use Particle dataloggers.
 SLP approx. methodology is consistent between RPi's & Particle's (see functions.py)
+
+Sets the "seconds" component of all timestamps to zero. SD card data never contained data
+recorded to the second, nor did TSMS.
 ==========================================================================================
 """
 import sys
@@ -30,7 +33,7 @@ sys.path.append(str(Path(__file__).resolve().parents[2]))
 from resources import functions as func
 
 
-data_destination = "/Users/rzieber/Documents/3D-PAWS/Turkiye/reformatted/CSV_Format/3DPAWS/Aug2022-Nov2024"
+data_destination = "/Users/rzieber/Documents/3D-PAWS/Turkiye/reformatted/CSV_Format/3DPAWS/full_dataperiod"
 
 data_origin_partI = "/Users/rzieber/Documents/3D-PAWS/Turkiye/reformatted/CSV_Format/3DPAWS/2022-Jan2024/complete_record/"
 data_origin_partII = "/Users/rzieber/Documents/3D-PAWS/Turkiye/raw/3DPAWS/Jan-2024_Nov-2024/"
@@ -174,6 +177,7 @@ for df in paws_dfs_partII:
         warnings.filterwarnings("ignore", message=".*Converting to PeriodArray.*")
 
         df['date'] = pd.to_datetime(df['date']).dt.tz_localize(None)
+        df['date'] = df['date'].dt.floor('min') # set "seconds" to zero 
 
         df['year_month'] = df['date'].dt.to_period('M')
         df['year_month_day'] = df['date'].dt.to_period('D')
