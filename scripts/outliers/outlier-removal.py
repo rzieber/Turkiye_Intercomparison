@@ -336,6 +336,7 @@ for i in range(len(station_directories)):
     ============================================================================================================================
     """
     print(f"Phase 4: Filtering out known outliers (special cases -- see Phase 4 for notes).") 
+
     # Erroneously high values -- most likely test tips during fabrication process
     if station_directories[i] == "station_TSMS04/":
         existing_nulls = paws_df_FILTERED['tipping'].isnull() 
@@ -759,43 +760,97 @@ for i in range(len(station_directories)):
     #     plt.close()
 
 
+"""
+=============================================================================================================================
+Create a time series plot of each individual 3D PAWS station data versus the TSMS reference station. COMPLETE RECORDS
+=============================================================================================================================
+"""
+sites = {
+    0:"Ankara", 1:"Konya", 2:"Adana"
+}
+station_map = {
+    0:[0,1,2], 1:[3,4,5], 2:[6,7,8]
+}
+
+for i in range(3):
+    print(f"\t{sites[i]}: Rainfall accumulation")
+
+    inst_1 = paws_dfs[station_map[i][0]].copy(deep=True)
+    inst_2 = paws_dfs[station_map[i][1]].copy(deep=True)
+    inst_3 = paws_dfs[station_map[i][2]].copy(deep=True)
+    tsms_ref = tsms_dfs[i].copy(deep=True)
+
+    inst_1.reset_index(inplace=True)
+    inst_2.reset_index(inplace=True)
+    inst_3.reset_index(inplace=True)
+    tsms_ref.reset_index(inplace=True)
+
+    merged_df = pd.merge(inst_1, inst_2, on='date', suffixes=('_1', '_2'))
+    merged_df = pd.merge(merged_df, inst_3, on='date', suffixes=('', '_3'))
+    merged_df = pd.merge(merged_df, tsms_ref, on='date', suffixes=('', '_tsms'))
+
+    merged_df['cumulative_rainfall_3DPAWS_1'] = merged_df['tipping_1'].cumsum()
+    merged_df['cumulative_rainfall_3DPAWS_2'] = merged_df['tipping_2'].cumsum()
+    merged_df['cumulative_rainfall_3DPAWS_3'] = merged_df['tipping'].cumsum()
+    merged_df['cumulative_rainfall_TSMS'] = merged_df['total_rainfall'].cumsum()
+
+    plt.figure(figsize=(20, 12))
+
+    plt.plot(merged_df['date'], merged_df['cumulative_rainfall_3DPAWS_1'], marker='.', markersize=1, label=f"TSMS0{station_map[i][0]} 3D PAWS")
+    plt.plot(merged_df['date'], merged_df['cumulative_rainfall_3DPAWS_2'], marker='.', markersize=1, label=f"TSMS0{station_map[i][1]} 3D PAWS")
+    plt.plot(merged_df['date'], merged_df['cumulative_rainfall_3DPAWS_3'], marker='.', markersize=1, label=f"TSMS0{station_map[i][2]} 3D PAWS")
+    plt.plot(merged_df['date'], merged_df['cumulative_rainfall_TSMS'], marker='.', markersize=1, label=f'{sites[i]} TSMS Reference')
+
+    plt.title(f'{sites[i]} Rainfall Accumulation')
+    plt.xlabel('Date')
+    plt.ylabel('Rainfall (mm)')
+    plt.xticks(rotation=45)
+
+    plt.legend()
+
+    plt.grid(True)
+    plt.tight_layout()
+
+    #plt.savefig(data_destination+station_directories[i]+f"total_rainfall/raw/{station_directories[i][8:14]}_rainfall_accumulation_TEST.png")
+    plt.savefig(data_destination+sites[i]+f"\\total_rainfall\\{sites[i]}_rainfall_accumulation.png")
+
+    plt.clf()
+    plt.close()
+
+
     """
     =============================================================================================================================
-    Create a time series plot of each individual 3D PAWS station data versus the TSMS reference station. COMPLETE RECORDS
+    Create a time series plot of each 3D PAWS station data versus the TSMS reference station. COMPLETE RECORDS
     =============================================================================================================================
     """
-    print(f"{station_directories[i][8:14]}: Cumulative rainfall -- complete records [PER INSTRUMENT]")
+    # print(f"{station_directories[i][8:14]}: Cumulative rainfall -- complete records [PER INSTRUMENT]")
 
-    # Rainfall Accumulation --------------------------------------------------------------------------------------------------------
-    for paws_station in station_directories: 
-        # paws_df_FILTERED_2 = paws_df_FILTERED[paws_df_FILTERED['tipping'] >= 0].copy().reset_index()
-        # tsms_df_FILTERED_2 = tsms_df_FILTERED[(tsms_df_FILTERED['total_rainfall']) >= 0].copy().reset_index()
+    # for paws_station in station_directories: 
+    #     merged_df = pd.merge(paws_df_FILTERED, tsms_df_FILTERED, on='date', how='inner')  # to eliminate bias
 
-        merged_df = pd.merge(paws_df_FILTERED, tsms_df_FILTERED, on='date', how='inner')  # to eliminate bias
+    #     merged_df['cumulative_rainfall_3DPAWS'] = merged_df['tipping'].cumsum()
+    #     merged_df['cumulative_rainfall_TSMS'] = merged_df['total_rainfall'].cumsum()
 
-        merged_df['cumulative_rainfall_3DPAWS'] = merged_df['tipping'].cumsum()
-        merged_df['cumulative_rainfall_TSMS'] = merged_df['total_rainfall'].cumsum()
+    #     plt.figure(figsize=(20, 12))
 
-        plt.figure(figsize=(20, 12))
+    #     plt.plot(merged_df['date'], merged_df['cumulative_rainfall_3DPAWS'], marker='.', markersize=1, label="3D PAWS")
+    #     plt.plot(merged_df['date'], merged_df['cumulative_rainfall_TSMS'], marker='.', markersize=1, label='TSMS')
 
-        plt.plot(merged_df['date'], merged_df['cumulative_rainfall_3DPAWS'], marker='.', markersize=1, label="3D PAWS")
-        plt.plot(merged_df['date'], merged_df['cumulative_rainfall_TSMS'], marker='.', markersize=1, label='TSMS')
+    #     plt.title(f'{station_directories[i][8:14]} Rainfall Accumulation: 3D PAWS versus TSMS')
+    #     plt.xlabel('Date')
+    #     plt.ylabel('Rainfall (mm)')
+    #     plt.xticks(rotation=45)
 
-        plt.title(f'{station_directories[i][8:14]} Rainfall Accumulation: 3D PAWS versus TSMS')
-        plt.xlabel('Date')
-        plt.ylabel('Rainfall (mm)')
-        plt.xticks(rotation=45)
+    #     plt.legend()
 
-        plt.legend()
+    #     plt.grid(True)
+    #     plt.tight_layout()
 
-        plt.grid(True)
-        plt.tight_layout()
+    #     #plt.savefig(data_destination+station_directories[i]+f"total_rainfall/raw/{station_directories[i][8:14]}_rainfall_accumulation_TEST.png")
+    #     plt.savefig(data_destination+station_directories[i]+f"total_rainfall\\raw\\{station_directories[i][8:14]}_rainfall_accumulation.png")
 
-        #plt.savefig(data_destination+station_directories[i]+f"total_rainfall/raw/{station_directories[i][8:14]}_rainfall_accumulation_TEST.png")
-        plt.savefig(data_destination+station_directories[i]+f"total_rainfall\\raw\\{station_directories[i][8:14]}_rainfall_accumulation.png")
-
-        plt.clf()
-        plt.close()
+    #     plt.clf()
+    #     plt.close()
 
 
     """
