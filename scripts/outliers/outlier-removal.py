@@ -25,13 +25,14 @@ from sklearn.metrics import mean_squared_error
 import seaborn as sns
 from pathlib import Path
 from datetime import timedelta
+from functools import reduce
 
 sys.path.append(str(Path(__file__).resolve().parents[2]))
 from resources import functions as func
 
 
-data_origin = r"/Users/rzieber/Documents/3D-PAWS/Turkiye/reformatted/CSV_Format/analysis/"
-data_destination = r"/Users/rzieber/Documents/3D-PAWS/Turkiye/plots/full_dataperiod/time_series/"
+data_origin = r"C:\\Users\\Becky\\Documents\\UCAR_ImportantStuff\\Turkiye\\data\\"
+data_destination = r"C:\\Users\\Becky\Documents\\UCAR_ImportantStuff\\Turkiye\\plots\\bar_charts\\daily_rainfal_per_site\\"
 
 outlier_reasons = [
     "null", "timestamp reset", "threshold", "manual removal"
@@ -103,15 +104,15 @@ for i in range(len(station_directories)):
                     )
             
             paws_df = paws_df[['date', 'bmp2_temp', 'htu_temp', 'mcp9808', 'bme2_hum', 'htu_hum', 'bmp2_pres',
-                               'bmp2_slp', 'wind_dir', 'wind_speed', "tipping"]]
+                                'bmp2_slp', 'wind_dir', 'wind_speed', "tipping"]]
             
             paws_df['year_month'] = paws_df['date'].dt.to_period('M')
             paws_df['year_month_day'] = paws_df['date'].dt.to_period('D')
-            paws_df['year_month_day_hour'] = paws_df['date'].dt.to_period('H')
+            paws_df['year_month_day_hour'] = paws_df['date'].dt.to_period('h')
             
             paws_df.set_index('date', inplace=True)
 
-            paws_dfs.append(paws_df)
+            #paws_dfs.append(paws_df)
 
         else:
             tsms_df = pd.read_csv(
@@ -124,15 +125,15 @@ for i in range(len(station_directories)):
             tsms_df['date'] = pd.to_datetime(tsms_df['date'])
 
             tsms_df = tsms_df[['date', 'temperature', 'humidity', 'actual_pressure', 'sea_level_pressure', 
-                               'avg_wind_dir', 'avg_wind_speed', 'total_rainfall']]
+                                'avg_wind_dir', 'avg_wind_speed', 'total_rainfall']]
             
             tsms_df['year_month'] = tsms_df['date'].dt.to_period('M')
             tsms_df['year_month_day'] = tsms_df['date'].dt.to_period('D')
-            tsms_df['year_month_day_hour'] = tsms_df['date'].dt.to_period('H')
+            tsms_df['year_month_day_hour'] = tsms_df['date'].dt.to_period('h')
 
             tsms_df.set_index('date', inplace=True) 
 
-            tsms_dfs.append(tsms_df) 
+            #tsms_dfs.append(tsms_df) 
 
     
     warnings.filterwarnings( # Ignore warnings so they don't clog up the console output
@@ -152,6 +153,13 @@ for i in range(len(station_directories)):
     =============================================================================================================================
     =============================================================================================================================
     """
+
+    # =============================================================================
+    # =============================================================================
+    # =============================================================================
+    # =============================================================================
+    # UNCOMMENT THE BELOW WHEN READY TO DO OUTLIER ANALYSIS
+
     paws_outliers = pd.DataFrame(columns=['date', 'column_name', 'original_value', 'outlier_type'])
     tsms_outliers = pd.DataFrame(columns=['date', 'column_name', 'original_value', 'outlier_type'])
     
@@ -330,11 +338,14 @@ for i in range(len(station_directories)):
                 'outlier_type': outlier_reasons[2]
             })
             paws_outliers = pd.concat([paws_outliers, outliers_to_add], ignore_index=True)
+
+    if station_directories[i] == "station_TSMS06/": paws_df_FILTERED.to_csv(f"C:\\Users\\Becky\\Downloads\\tsms06_pre-removal.csv")
     """
     ============================================================================================================================
     Phase 4: Manual removal of known outliers.
     ============================================================================================================================
     """
+    print(f"Phase 4: Filtering out known outliers (special cases -- see Phase 4 for notes).") 
     # Erroneously high values -- most likely test tips during fabrication process
     if station_directories[i] == "station_TSMS04/":
         existing_nulls = paws_df_FILTERED['tipping'].isnull() 
@@ -358,36 +369,59 @@ for i in range(len(station_directories)):
             'original_value': to_remove,
             'outlier_type': outlier_reasons[3]
         })
-        tsms_outliers = pd.concat([tsms_outliers, outliers_to_add], ignore_index=True)
+        paws_outliers = pd.concat([paws_outliers, outliers_to_add], ignore_index=True)
 
+    # Erroneously high values -- possibly faulty connector, or manual manipulation of the gauge by the public
+    if station_directories[i] == "station_TSMS08/":
+        existing_nulls = paws_df_FILTERED['tipping'].isnull() 
 
-    # Erroneously high values -- could be faulty connector
-    if station_directories[i] == "station_TSMS08/":              
-        existing_nulls = paws_df_FILTERED['tipping'].isnull()    
+        dates_to_remove = [
+            ("2023-04-08","2023-04-14 23:59:00"),           # Possibly faulty connector
+            ("2023-05-15 00:00:00","2023-05-17 23:59:59"),  # Part I TBD
+            ("2024-02-08 00:00:00","2024-02-11 23:59:59"),  # Part II TBD
+            ("2024-02-15 00:00:00","2024-02-20 23:59:59"), 
+            ("2024-03-07 00:00:00","2024-03-07 23:59:59"),
+            ("2024-03-09 00:00:00","2024-03-10 23:59:59"), 
+            ("2024-03-21 00:00:00","2024-03-21 23:59:59"),
+            #("2024-09-21 00:00:00","2024-09-21 23:59:59")   # Part II TBD
+        ]
 
-        exclude_rainfall_start = pd.to_datetime("2023-04-08")
-        exclude_rainfall_end = pd.to_datetime("2023-04-14 23:59:00")
-        
-        to_remove = paws_df_FILTERED.loc[
-            (paws_df_FILTERED['date'] >= exclude_rainfall_start) & (paws_df_FILTERED['date'] <= exclude_rainfall_end), 'tipping'
-        ].copy()
-        
-        paws_df_FILTERED.loc[
-            (paws_df_FILTERED['date'] >= exclude_rainfall_start) & (paws_df_FILTERED['date'] <= exclude_rainfall_end), 'tipping'
-        ] = np.nan
+        to_remove_list = []
+        for start_date, end_date in dates_to_remove:
+            exclude_rainfall_start = pd.to_datetime(start_date)
+            exclude_rainfall_end = pd.to_datetime(end_date)
+
+            mask = (paws_df_FILTERED['date'] >= exclude_rainfall_start) & (paws_df_FILTERED['date'] <= exclude_rainfall_end)
+            to_remove = paws_df_FILTERED.loc[mask, 'tipping'].copy()
+            to_remove_list.append(to_remove)
+
+            paws_df_FILTERED.loc[
+                (paws_df_FILTERED['date'] >= exclude_rainfall_start) & (paws_df_FILTERED['date'] <= exclude_rainfall_end), 'tipping'
+            ] = np.nan
 
         new_nulls = paws_df_FILTERED['tipping'].isnull() & ~existing_nulls
+
+        all_removed = pd.concat(to_remove_list)
+        all_removed = all_removed[new_nulls]
 
         outliers_to_add = pd.DataFrame({                                
             'date': paws_df_FILTERED.loc[new_nulls, 'date'],
             'column_name': 'tipping',
-            'original_value': to_remove,
+            'original_value': all_removed.values,
             'outlier_type': outlier_reasons[3]
         })
-        tsms_outliers = pd.concat([tsms_outliers, outliers_to_add], ignore_index=True)
+        paws_outliers = pd.concat([paws_outliers, outliers_to_add], ignore_index=True)
 
-    #tsms_outliers.to_csv(f"/Users/rzieber/Downloads/{station_directories[i][8:14]}_new_latest_outliers.csv")
+    # paws_outliers.to_csv(f"/Users/rzieber/Downloads/{station_directories[i][8:14]}_new_latest_outliers.csv")
 
+    # paws_outliers.to_csv(f"C:\\Users\\Becky\\Downloads\\{station_directories[i][8:14]}_outliers_1-19-25.csv")
+    # paws_df_FILTERED.to_csv(f"C:\\Users\\Becky\\Downloads\\{station_directories[i][8:14]}_3DPAWS_FILTERED_1-19-25.csv")
+
+# UNCOMMENT THE ABOVE WHEN READY TO DO OUTLIER ANALYSIS
+# =============================================================================
+# =============================================================================
+# =============================================================================
+# =============================================================================
 
     # """
     # =============================================================================================================================
@@ -395,7 +429,7 @@ for i in range(len(station_directories)):
     # =============================================================================================================================
     # """
     # print(f"Phase 4: Filtering out HTU trend-switching.")
-           
+
     # paws_df_FILTERED.reset_index(drop=True, inplace=True)   # Reset the index to ensure it is a simple range
 
     # # isolate the known timeframes when HTU bit-switching is happening
@@ -630,7 +664,10 @@ for i in range(len(station_directories)):
     # paws_outliers.to_csv(f"/Users/rzieber/Downloads/paws_outliers_{station_directories[i][8:14]}.csv")
     # tsms_outliers.to_csv(f"/Users/rzieber/Downloads/tsms_outliers_{station_directories[i][8:14]}.csv")
 
-    print("\n----------------------\n")
+    paws_dfs.append(paws_df_FILTERED)
+    tsms_dfs.append(tsms_df_FILTERED)
+
+    print("\n----------------------")
 
 # ----------------------------------------------------------------------------------------------------------------------------------------------- PLOT GEN LOGIC
     
@@ -883,20 +920,10 @@ for i in range(len(station_directories)):
     =============================================================================================================================
     """
     # print(f"{station_directories[i][8:14]}: " \
-    #                    "Bar charts for rainfall accumulation -- monthly records [INSTRUMENT VS REFERENCE COMPARISON]")
-    
-    # paws_df_FILTERED_2 = paws_df_FILTERED[paws_df_FILTERED['tipping'] >= 0].copy().reset_index()
-    # tsms_df_FILTERED_2 = tsms_df_FILTERED[(tsms_df_FILTERED['total_rainfall']) >= 0].copy().reset_index()
-
-    # if station_directories[i] == "station_TSMS08/":
-    #     exclude_garbage_start = pd.to_datetime("2023-04-08")
-    #     exclude_garbage_end = pd.to_datetime("2023-04-15")
-    #     paws_df_FILTERED_2 = paws_df_FILTERED_2[
-    #         ~((paws_df_FILTERED_2['date'] >= exclude_garbage_start) & (paws_df_FILTERED_2['date'] <= exclude_garbage_end))
-    #     ]  
+    #                     "Bar charts for rainfall accumulation -- monthly records [INSTRUMENT VS REFERENCE COMPARISON]")
         
-    # for year_month, paws_grouped in paws_df_FILTERED_2.groupby("year_month"):
-    #     tsms_grouped = tsms_df_FILTERED_2[tsms_df_FILTERED_2['year_month'] == year_month]
+    # for year_month, paws_grouped in paws_df_FILTERED.reset_index(inplace=True).groupby("year_month"):
+    #     tsms_grouped = tsms_df_FILTERED[tsms_df_FILTERED['year_month'] == year_month]
 
     #     print(f"{station_directories[i][8:14]} at {year_month}")
 
@@ -941,114 +968,181 @@ for i in range(len(station_directories)):
     #     plt.tight_layout()
 
     #     # Save the plot
-    #     plt.savefig(data_destination + station_directories[i] + f"total_rainfall/raw/{station_directories[i][8:14]}_{year_month}_daily_rainfall.png")    
+    #     # plt.savefig(data_destination + station_directories[i] + f"total_rainfall/raw/{station_directories[i][8:14]}_{year_month}_daily_rainfall.png")  
+    #     plt.savefig(data_destination + station_directories[i] + f"total_rainfall\\raw\\{station_directories[i][8:14]}_{year_month}_daily_rainfall.png")    
         
     #     plt.clf()
     #     plt.close()
 
-# ====================================================================================================    
-# ====================================================================================================    
-# ====================================================================================================    
 
 """
 =============================================================================================================================
-Create bar charts for daily 3D PAWS rainfall accumulation (per instrument) compared to TSMS rainfall accumulation. MONTHLY RECORDS
+Create bar charts for daily 3D PAWS rainfall accumulation (per site) compared to TSMS rainfall accumulation. MONTHLY RECORDS
 =============================================================================================================================
 """
-sites = {
-        0:"Ankara", 1:"Konya", 2:"Adana"
-}
+# sites = {
+#     0:"Ankara", 1:"Konya", 2:"Adana"
+# }
+# station_map = {
+#     0:[0,1,2], 1:[3,4,5], 2:[6,7,8]
+# }
 
-for i in range(len(tsms_dfs)):
-    print(tsms_dfs[i])
+# for i in range(3):
+#     print(f"{sites[i]}: Bar charts for rainfall accumulation -- daily totals [ALL INSTRUMENTS PER SITE]")
 
-for i in range(len(paws_dfs)):
-    print(f"{sites[i]}: Bar charts for rainfall accumulation -- monthly totals [ALL INSTRUMENTS PER SITE]")
+#     inst_1 = paws_dfs[station_map[i][0]].copy(deep=True)
+#     inst_2 = paws_dfs[station_map[i][1]].copy(deep=True)
+#     inst_3 = paws_dfs[station_map[i][2]].copy(deep=True)
+#     tsms_ref = tsms_dfs[i].copy(deep=True)
 
-    inst_1 = inst_2 = inst_3 = None
-    if i in [0,1,2]:        # Ankara 
-        inst_1 = paws_dfs[0]
-        inst_2 = paws_dfs[1]
-        inst_3 = paws_dfs[2]
-    elif i in [3,4,5]:      # Konya 
-        inst_1 = paws_dfs[3]
-        inst_2 = paws_dfs[4]
-        inst_3 = paws_dfs[5]
-    elif i in [6,7,8]:      # Adana
-        inst_1 = paws_dfs[6]
-        inst_2 = paws_dfs[7]
-        inst_3 = paws_dfs[8]
-    else:
-        print(f"[ERROR]: The index {i} not valid for tsms_dfs & paws_dfs.")
-        sys.exit(-1)
-
-    inst_1.reset_index(inplace=True)
-    inst_2.reset_index(inplace=True)
-    inst_3.reset_index(inplace=True)
-    tsms_df_COPY = tsms_dfs[i].copy().reset_index(inplace=True)
+#     inst_1.reset_index(inplace=True)
+#     inst_2.reset_index(inplace=True)
+#     inst_3.reset_index(inplace=True)
+#     tsms_ref.reset_index(inplace=True)
         
-    for year_month, tsms_grouped in tsms_df_COPY.groupby("year_month"):
-        inst_1_grouped = inst_1[inst_1['year_month'] == year_month]
-        inst_2_grouped = inst_2[inst_2['year_month'] == year_month]
-        inst_3_grouped = inst_3[inst_3['year_month'] == year_month]
+#     for year_month in set(inst_1['year_month']) & \
+#                         set(inst_2['year_month']) & \
+#                             set(inst_3['year_month']) & \
+#                                 set(tsms_ref['year_month']):
+#         inst_1_grouped = inst_1[inst_1['year_month'] == year_month]
+#         inst_2_grouped = inst_2[inst_2['year_month'] == year_month]
+#         inst_3_grouped = inst_3[inst_3['year_month'] == year_month]
+#         tsms_grouped = tsms_ref[tsms_ref['year_month'] == year_month]
 
-        print(f"{station_directories[i][8:14]} at {year_month}")
+#         print(f"{sites[i]} at {year_month}")
 
-        merged_df = inst_1_grouped.merge( # only select rows where all 4 stations contain data (to eliminate bias)
-            inst_2_grouped, on='date', how='inner').merge(
-                inst_3_grouped, on='date', how='inner').merge(
-                    tsms_grouped, on='date', how='inner') 
+#         merged_df = pd.merge(inst_1_grouped, inst_2_grouped, on='date', suffixes=('_1', '_2'))
+#         merged_df = pd.merge(merged_df, inst_3_grouped, on='date', suffixes=('', '_3'))
+#         merged_df = pd.merge(merged_df, tsms_grouped, on='date', suffixes=('', '_tsms'))
 
-        merged_df.to_csv(f"/Users/rzieber/Downloads/{sites[i]}_merged_df.csv")
+#         merged_df['daily_rainfall_1'] = merged_df['tipping_1']    # Calculate daily rainfall totals
+#         merged_df['daily_rainfall_2'] = merged_df['tipping_2']
+#         merged_df['daily_rainfall_3'] = merged_df['tipping']
+#         merged_df['daily_rainfall_TSMS'] = merged_df['total_rainfall']
 
-        # # Calculate daily rainfall totals instead of cumulative
-        # merged_df['daily_rainfall_3DPAWS'] = merged_df['tipping']
-        # merged_df['daily_rainfall_TSMS'] = merged_df['total_rainfall']
-
-        # # Sum daily rainfall by date
-        # daily_totals = merged_df.groupby('year_month_day_x')[['daily_rainfall_3DPAWS', 'daily_rainfall_TSMS']].sum().reset_index()
-
-        # days = daily_totals['year_month_day_x'].dt.day
-        # paws_values = daily_totals['daily_rainfall_3DPAWS']
-        # tsms_values = daily_totals['daily_rainfall_TSMS']
-
-        # index = range(len(days))
-
-        # plt.figure(figsize=(20, 12))
-
-        # bars1 = plt.bar(index, paws_values, width=0.35, color='blue', label='3DPAWS Daily Rainfall')
-        # bars2 = plt.bar([i + 0.35 for i in index], tsms_values, width=0.35, color='orange', label='TSMS Daily Rainfall')
-
-        # # Add labels, title, and legend
-        # plt.xlabel(f'Day in {year_month}')
-        # plt.ylabel('Daily Rainfall (mm)')
-        # plt.title(f'{station_directories[i][8:14]} Daily Rainfall Comparison: 3DPAWS vs TSMS for {year_month}')
-        # plt.xticks([i + 0.35 / 2 for i in index], days, rotation=45)
-        # plt.ylim(0, 50)
-        # plt.legend()
-
-        # # Add numerical values above bars
-        # for bar in bars1:
-        #     yval = bar.get_height()
-        #     plt.text(bar.get_x() + bar.get_width()/2, yval, round(yval, 1), ha='center', va='bottom', fontsize=12)
-
-        # for bar in bars2:
-        #     yval = bar.get_height()
-        #     plt.text(bar.get_x() + bar.get_width()/2, yval, round(yval, 1), ha='center', va='bottom', fontsize=12)
-
-        # # Display the plot
-        # plt.tight_layout()
-
-        # # Save the plot
-        # plt.savefig(data_destination + station_directories[i] + f"total_rainfall/raw/{station_directories[i][8:14]}_{year_month}_daily_rainfall.png")    
+#         #merged_df.to_csv(f"C:\\Users\\Becky\\Downloads\\{sites[i]}_{year_month}_merged_df_FINAL.csv")
+#         #merged_df.to_csv(f"/Users/rzieber/Downloads/{sites[i]}_{year_month}_merged_df_FINAL.csv")
         
-        # plt.clf()
-        # plt.close()
+#         daily_totals = merged_df.groupby('year_month_day')[     # Sum daily rainfall by date
+#             ['daily_rainfall_1', 'daily_rainfall_2', 'daily_rainfall_3', 'daily_rainfall_TSMS']
+#         ].sum().reset_index()
+
+#         days = daily_totals['year_month_day'].dt.day
+#         values_1 = daily_totals['daily_rainfall_1']
+#         values_2 = daily_totals['daily_rainfall_2']
+#         values_3 = daily_totals['daily_rainfall_3']
+#         values_tsms = daily_totals['daily_rainfall_TSMS']
+
+#         index = range(len(days))
+
+#         plt.figure(figsize=(20, 12), constrained_layout=True)
+
+#         bar_width = 0.2
+#         bars1 = plt.bar(index, values_1, width=bar_width, color='blue', label=f'3DPAWS TSMS0{station_map[i][0]}')
+#         bars2 = plt.bar([i + bar_width for i in index], values_2, width=bar_width, color='orange', label=f'3DPAWS TSMS0{station_map[i][1]}')
+#         bars3 = plt.bar([i + 2*bar_width for i in index], values_3, width=bar_width, color='green', label=f'3DPAWS TSMS0{station_map[i][2]}')
+#         bars4 = plt.bar([i + 3*bar_width for i in index], values_tsms, width=bar_width, color='red', label='TSMS Reference')
+        
+#         plt.xlabel(f'Day in {year_month}', fontsize=8)          # Add labels, title, and legend
+#         plt.ylabel('Daily Rainfall (mm)', fontsize=8)
+#         plt.title(f'{sites[i]} Daily Rainfall Comparison: All Instruments for {year_month}', fontsize=8)
+#         plt.xticks([i + 1.5*bar_width for i in index], days, rotation=45)
+#         plt.ylim(0, 50)
+#         plt.legend()
+
+#         for bars in [bars1, bars2, bars3, bars4]:               # Add numerical values above bars
+#             for bar in bars:
+#                 yval = bar.get_height()
+#                 plt.text(bar.get_x() + bar.get_width()/2, yval, round(yval, 1), ha='center', va='bottom', fontsize=8)
+
+#         plt.savefig(data_destination + sites[i] + f"\\total_rainfall\\test\\{sites[i]}_{year_month}_daily_rainfall_all_instruments.png")    
+        
+#         plt.clf()
+#         plt.close()
+
+# ====================================================================================================    
+# ====================================================================================================    
+# ====================================================================================================    
+    
+"""
+=============================================================================================================================
+Create bar charts for daily 3D PAWS rainfall accumulation (per site) compared to TSMS rainfall accumulation. COMPLETE RECORDS
+=============================================================================================================================
+"""
+# sites = {
+#     0:"Ankara", 1:"Konya", 2:"Adana"
+# }
+# station_map = {
+#     0:[0,1,2], 1:[3,4,5], 2:[6,7,8]
+# }
+
+# for i in range(3):
+#     print(f"{sites[i]}: Bar charts for rainfall accumulation -- monthly totals [ALL INSTRUMENTS PER SITE]")
+
+#     inst_1 = paws_dfs[station_map[i][0]].copy(deep=True)
+#     inst_2 = paws_dfs[station_map[i][1]].copy(deep=True)
+#     inst_3 = paws_dfs[station_map[i][2]].copy(deep=True)
+#     tsms_ref = tsms_dfs[i].copy(deep=True)
+
+#     inst_1.reset_index(inplace=True)
+#     inst_2.reset_index(inplace=True)
+#     inst_3.reset_index(inplace=True)
+#     tsms_ref.reset_index(inplace=True)
+
+#     merged_df = pd.merge(inst_1, inst_2, on='date', suffixes=('_1', '_2'))
+#     merged_df = pd.merge(merged_df, inst_3, on='date', suffixes=('', '_3'))
+#     merged_df = pd.merge(merged_df, tsms_ref, on='date', suffixes=('', '_tsms'))
+
+#     merged_df['monthly_rainfall_1'] = merged_df['tipping_1']
+#     merged_df['monthly_rainfall_2'] = merged_df['tipping_2']
+#     merged_df['monthly_rainfall_3'] = merged_df['tipping']
+#     merged_df['monthly_rainfall_TSMS'] = merged_df['total_rainfall']
+
+#     #merged_df.to_csv(f"C:\\Users\\Becky\\Downloads\\{sites[i]}_merged_df_FINAL_1-19-25.csv")
+#     #merged_df.to_csv(f"/Users/rzieber/Downloads/{sites[i]}_{year_month}_merged_df_FINAL.csv")
+
+#     monthly_totals = merged_df.groupby('year_month')[
+#         ['monthly_rainfall_1', 'monthly_rainfall_2', 'monthly_rainfall_3', 'monthly_rainfall_TSMS']
+#     ].sum().reset_index()
+
+#     months = monthly_totals['year_month']
+#     values_1 = monthly_totals['monthly_rainfall_1']
+#     values_2 = monthly_totals['monthly_rainfall_2']
+#     values_3 = monthly_totals['monthly_rainfall_3']
+#     values_tsms = monthly_totals['monthly_rainfall_TSMS']
+
+#     index = range(len(months))
+
+#     plt.figure(figsize=(20, 12), constrained_layout=True)
+
+#     bar_width = 0.2
+#     bars1 = plt.bar(index, values_1, width=bar_width, color='blue', label=f'3DPAWS TSMS0{station_map[i][0]}')
+#     bars2 = plt.bar([i + bar_width for i in index], values_2, width=bar_width, color='orange', label=f'3DPAWS TSMS0{station_map[i][1]}')
+#     bars3 = plt.bar([i + 2*bar_width for i in index], values_3, width=bar_width, color='green', label=f'3DPAWS TSMS0{station_map[i][2]}')
+#     bars4 = plt.bar([i + 3*bar_width for i in index], values_tsms, width=bar_width, color='red', label='TSMS Reference')
+
+#     plt.xlabel('Month', fontsize=8)
+#     plt.ylabel('Monthly Rainfall (mm)', fontsize=8)
+#     plt.title(f'{sites[i]} Monthly Rainfall Comparison: All Instruments', fontsize=10)
+#     plt.xticks([i + 1.5*bar_width for i in index], months, rotation=45, ha='right')
+#     plt.legend(fontsize='small')
+
+#     for bars in [bars1, bars2, bars3, bars4]:
+#         for bar in bars:
+#             yval = bar.get_height()
+#             plt.text(bar.get_x() + bar.get_width()/2, yval, round(yval, 1), ha='center', va='bottom', fontsize=6)
+
+#     plt.savefig(data_destination + sites[i] + f"\\total_rainfall\\test\\{sites[i]}_monthly_rainfall_all_instruments.png")
+    
+#     plt.clf()
+#     plt.close()
+
+    # ====================================================================================================    
+    # ====================================================================================================    
+    # ====================================================================================================    
 
 
-    # ====================================================================================================    
-    # ====================================================================================================    
-    # ====================================================================================================    
+
 
 
     # """
