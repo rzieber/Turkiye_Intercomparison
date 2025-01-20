@@ -17,7 +17,7 @@ import numpy as np
 from pathlib import Path
 
 
-data_origin = "/Users/rzieber/Documents/3D-PAWS/Turkiye/reformatted/CSV_Format/3DPAWS/Aug2022-Nov2024/"
+data_origin = "/Users/rzieber/Documents/3D-PAWS/Turkiye/reformatted/CSV_Format/3DPAWS/full_dataperiod/"
 all_files = sorted([file for file in Path(data_origin).rglob('*') if file.is_file() and file.name != ".DS_Store" and "_FINAL.csv" not in file.name])
 
 dfs = []
