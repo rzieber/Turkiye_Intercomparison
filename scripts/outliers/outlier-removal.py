@@ -31,8 +31,10 @@ sys.path.append(str(Path(__file__).resolve().parents[2]))
 from resources import functions as func
 
 
-data_origin = r"C:\\Users\\Becky\\Documents\\UCAR_ImportantStuff\\Turkiye\\data\\"
-data_destination = r"C:\\Users\\Becky\\Documents\\UCAR_ImportantStuff\\Turkiye\\plots\\time_series\\rainfall_accumulation_per_site\\"
+#data_origin = r"C:\\Users\\Becky\\Documents\\UCAR_ImportantStuff\\Turkiye\\data\\"
+data_origin = r"/Users/rzieber/Documents/3D-PAWS/Turkiye/reformatted/CSV_Format/analysis/"
+#data_destination = r"C:\\Users\\Becky\\Documents\\UCAR_ImportantStuff\\Turkiye\\plots\\time_series\\rainfall_accumulation_per_site\\"
+data_destination = r"/Users/rzieber/Documents/3D-PAWS/Turkiye/plots/full_dataperiod/time_series/"
 
 outlier_reasons = [
     "null", "timestamp reset", "threshold", "manual removal"
@@ -759,65 +761,6 @@ for i in range(len(station_directories)):
     #     plt.clf()
     #     plt.close()
 
-
-"""
-=============================================================================================================================
-Create a time series plot of each individual 3D PAWS station data versus the TSMS reference station. COMPLETE RECORDS
-=============================================================================================================================
-"""
-sites = {
-    0:"Ankara", 1:"Konya", 2:"Adana"
-}
-station_map = {
-    0:[0,1,2], 1:[3,4,5], 2:[6,7,8]
-}
-
-for i in range(3):
-    print(f"\t{sites[i]}: Rainfall accumulation")
-
-    inst_1 = paws_dfs[station_map[i][0]].copy(deep=True)
-    inst_2 = paws_dfs[station_map[i][1]].copy(deep=True)
-    inst_3 = paws_dfs[station_map[i][2]].copy(deep=True)
-    tsms_ref = tsms_dfs[i].copy(deep=True)
-
-    inst_1.reset_index(inplace=True)
-    inst_2.reset_index(inplace=True)
-    inst_3.reset_index(inplace=True)
-    tsms_ref.reset_index(inplace=True)
-
-    merged_df = pd.merge(inst_1, inst_2, on='date', suffixes=('_1', '_2'))
-    merged_df = pd.merge(merged_df, inst_3, on='date', suffixes=('', '_3'))
-    merged_df = pd.merge(merged_df, tsms_ref, on='date', suffixes=('', '_tsms'))
-
-    merged_df['cumulative_rainfall_3DPAWS_1'] = merged_df['tipping_1'].cumsum()
-    merged_df['cumulative_rainfall_3DPAWS_2'] = merged_df['tipping_2'].cumsum()
-    merged_df['cumulative_rainfall_3DPAWS_3'] = merged_df['tipping'].cumsum()
-    merged_df['cumulative_rainfall_TSMS'] = merged_df['total_rainfall'].cumsum()
-
-    plt.figure(figsize=(20, 12))
-
-    plt.plot(merged_df['date'], merged_df['cumulative_rainfall_3DPAWS_1'], marker='.', markersize=1, label=f"TSMS0{station_map[i][0]} 3D PAWS")
-    plt.plot(merged_df['date'], merged_df['cumulative_rainfall_3DPAWS_2'], marker='.', markersize=1, label=f"TSMS0{station_map[i][1]} 3D PAWS")
-    plt.plot(merged_df['date'], merged_df['cumulative_rainfall_3DPAWS_3'], marker='.', markersize=1, label=f"TSMS0{station_map[i][2]} 3D PAWS")
-    plt.plot(merged_df['date'], merged_df['cumulative_rainfall_TSMS'], marker='.', markersize=1, label=f'{sites[i]} TSMS Reference')
-
-    plt.title(f'{sites[i]} Rainfall Accumulation')
-    plt.xlabel('Date')
-    plt.ylabel('Rainfall (mm)')
-    plt.xticks(rotation=45)
-
-    plt.legend()
-
-    plt.grid(True)
-    plt.tight_layout()
-
-    #plt.savefig(data_destination+station_directories[i]+f"total_rainfall/raw/{station_directories[i][8:14]}_rainfall_accumulation_TEST.png")
-    plt.savefig(data_destination+sites[i]+f"\\total_rainfall\\{sites[i]}_rainfall_accumulation.png")
-
-    plt.clf()
-    plt.close()
-
-
     """
     =============================================================================================================================
     Create a time series plot of each 3D PAWS station data versus the TSMS reference station. COMPLETE RECORDS
@@ -851,7 +794,6 @@ for i in range(3):
 
     #     plt.clf()
     #     plt.close()
-
 
     """
     =============================================================================================================================
@@ -1002,182 +944,11 @@ for i in range(3):
     #     plt.clf()
     #     plt.close()
 
-
-"""
-=============================================================================================================================
-Create bar charts for daily 3D PAWS rainfall accumulation (per site) compared to TSMS rainfall accumulation. MONTHLY RECORDS
-=============================================================================================================================
-"""
-# sites = {
-#     0:"Ankara", 1:"Konya", 2:"Adana"
-# }
-# station_map = {
-#     0:[0,1,2], 1:[3,4,5], 2:[6,7,8]
-# }
-
-# for i in range(3):
-#     print(f"{sites[i]}: Bar charts for rainfall accumulation -- daily totals [ALL INSTRUMENTS PER SITE]")
-
-#     inst_1 = paws_dfs[station_map[i][0]].copy(deep=True)
-#     inst_2 = paws_dfs[station_map[i][1]].copy(deep=True)
-#     inst_3 = paws_dfs[station_map[i][2]].copy(deep=True)
-#     tsms_ref = tsms_dfs[i].copy(deep=True)
-
-#     inst_1.reset_index(inplace=True)
-#     inst_2.reset_index(inplace=True)
-#     inst_3.reset_index(inplace=True)
-#     tsms_ref.reset_index(inplace=True)
-        
-#     for year_month in set(inst_1['year_month']) & \
-#                         set(inst_2['year_month']) & \
-#                             set(inst_3['year_month']) & \
-#                                 set(tsms_ref['year_month']):
-#         inst_1_grouped = inst_1[inst_1['year_month'] == year_month]
-#         inst_2_grouped = inst_2[inst_2['year_month'] == year_month]
-#         inst_3_grouped = inst_3[inst_3['year_month'] == year_month]
-#         tsms_grouped = tsms_ref[tsms_ref['year_month'] == year_month]
-
-#         print(f"{sites[i]} at {year_month}")
-
-#         merged_df = pd.merge(inst_1_grouped, inst_2_grouped, on='date', suffixes=('_1', '_2'))
-#         merged_df = pd.merge(merged_df, inst_3_grouped, on='date', suffixes=('', '_3'))
-#         merged_df = pd.merge(merged_df, tsms_grouped, on='date', suffixes=('', '_tsms'))
-
-#         merged_df['daily_rainfall_1'] = merged_df['tipping_1']    # Calculate daily rainfall totals
-#         merged_df['daily_rainfall_2'] = merged_df['tipping_2']
-#         merged_df['daily_rainfall_3'] = merged_df['tipping']
-#         merged_df['daily_rainfall_TSMS'] = merged_df['total_rainfall']
-
-#         #merged_df.to_csv(f"C:\\Users\\Becky\\Downloads\\{sites[i]}_{year_month}_merged_df_FINAL.csv")
-#         #merged_df.to_csv(f"/Users/rzieber/Downloads/{sites[i]}_{year_month}_merged_df_FINAL.csv")
-        
-#         daily_totals = merged_df.groupby('year_month_day')[     # Sum daily rainfall by date
-#             ['daily_rainfall_1', 'daily_rainfall_2', 'daily_rainfall_3', 'daily_rainfall_TSMS']
-#         ].sum().reset_index()
-
-#         days = daily_totals['year_month_day'].dt.day
-#         values_1 = daily_totals['daily_rainfall_1']
-#         values_2 = daily_totals['daily_rainfall_2']
-#         values_3 = daily_totals['daily_rainfall_3']
-#         values_tsms = daily_totals['daily_rainfall_TSMS']
-
-#         index = range(len(days))
-
-#         plt.figure(figsize=(20, 12), constrained_layout=True)
-
-#         bar_width = 0.2
-#         bars1 = plt.bar(index, values_1, width=bar_width, color='blue', label=f'3DPAWS TSMS0{station_map[i][0]}')
-#         bars2 = plt.bar([i + bar_width for i in index], values_2, width=bar_width, color='orange', label=f'3DPAWS TSMS0{station_map[i][1]}')
-#         bars3 = plt.bar([i + 2*bar_width for i in index], values_3, width=bar_width, color='green', label=f'3DPAWS TSMS0{station_map[i][2]}')
-#         bars4 = plt.bar([i + 3*bar_width for i in index], values_tsms, width=bar_width, color='red', label='TSMS Reference')
-        
-#         plt.xlabel(f'Day in {year_month}', fontsize=8)          # Add labels, title, and legend
-#         plt.ylabel('Daily Rainfall (mm)', fontsize=8)
-#         plt.title(f'{sites[i]} Daily Rainfall Comparison: All Instruments for {year_month}', fontsize=8)
-#         plt.xticks([i + 1.5*bar_width for i in index], days, rotation=45)
-#         plt.ylim(0, 50)
-#         plt.legend()
-
-#         for bars in [bars1, bars2, bars3, bars4]:               # Add numerical values above bars
-#             for bar in bars:
-#                 yval = bar.get_height()
-#                 plt.text(bar.get_x() + bar.get_width()/2, yval, round(yval, 1), ha='center', va='bottom', fontsize=8)
-
-#         plt.savefig(data_destination + sites[i] + f"\\total_rainfall\\test\\{sites[i]}_{year_month}_daily_rainfall_all_instruments.png")    
-        
-#         plt.clf()
-#         plt.close()
-
-# ====================================================================================================    
-# ====================================================================================================    
-# ====================================================================================================    
-    
-"""
-=============================================================================================================================
-Create bar charts for daily 3D PAWS rainfall accumulation (per site) compared to TSMS rainfall accumulation. COMPLETE RECORDS
-=============================================================================================================================
-"""
-# sites = {
-#     0:"Ankara", 1:"Konya", 2:"Adana"
-# }
-# station_map = {
-#     0:[0,1,2], 1:[3,4,5], 2:[6,7,8]
-# }
-
-# for i in range(3):
-#     print(f"{sites[i]}: Bar charts for rainfall accumulation -- monthly totals [ALL INSTRUMENTS PER SITE]")
-
-#     inst_1 = paws_dfs[station_map[i][0]].copy(deep=True)
-#     inst_2 = paws_dfs[station_map[i][1]].copy(deep=True)
-#     inst_3 = paws_dfs[station_map[i][2]].copy(deep=True)
-#     tsms_ref = tsms_dfs[i].copy(deep=True)
-
-#     inst_1.reset_index(inplace=True)
-#     inst_2.reset_index(inplace=True)
-#     inst_3.reset_index(inplace=True)
-#     tsms_ref.reset_index(inplace=True)
-
-#     merged_df = pd.merge(inst_1, inst_2, on='date', suffixes=('_1', '_2'))
-#     merged_df = pd.merge(merged_df, inst_3, on='date', suffixes=('', '_3'))
-#     merged_df = pd.merge(merged_df, tsms_ref, on='date', suffixes=('', '_tsms'))
-
-#     merged_df['monthly_rainfall_1'] = merged_df['tipping_1']
-#     merged_df['monthly_rainfall_2'] = merged_df['tipping_2']
-#     merged_df['monthly_rainfall_3'] = merged_df['tipping']
-#     merged_df['monthly_rainfall_TSMS'] = merged_df['total_rainfall']
-
-#     #merged_df.to_csv(f"C:\\Users\\Becky\\Downloads\\{sites[i]}_merged_df_FINAL_1-19-25.csv")
-#     #merged_df.to_csv(f"/Users/rzieber/Downloads/{sites[i]}_{year_month}_merged_df_FINAL.csv")
-
-#     monthly_totals = merged_df.groupby('year_month')[
-#         ['monthly_rainfall_1', 'monthly_rainfall_2', 'monthly_rainfall_3', 'monthly_rainfall_TSMS']
-#     ].sum().reset_index()
-
-#     months = monthly_totals['year_month']
-#     values_1 = monthly_totals['monthly_rainfall_1']
-#     values_2 = monthly_totals['monthly_rainfall_2']
-#     values_3 = monthly_totals['monthly_rainfall_3']
-#     values_tsms = monthly_totals['monthly_rainfall_TSMS']
-
-#     index = range(len(months))
-
-#     plt.figure(figsize=(20, 12), constrained_layout=True)
-
-#     bar_width = 0.2
-#     bars1 = plt.bar(index, values_1, width=bar_width, color='blue', label=f'3DPAWS TSMS0{station_map[i][0]}')
-#     bars2 = plt.bar([i + bar_width for i in index], values_2, width=bar_width, color='orange', label=f'3DPAWS TSMS0{station_map[i][1]}')
-#     bars3 = plt.bar([i + 2*bar_width for i in index], values_3, width=bar_width, color='green', label=f'3DPAWS TSMS0{station_map[i][2]}')
-#     bars4 = plt.bar([i + 3*bar_width for i in index], values_tsms, width=bar_width, color='red', label='TSMS Reference')
-
-#     plt.xlabel('Month', fontsize=8)
-#     plt.ylabel('Monthly Rainfall (mm)', fontsize=8)
-#     plt.title(f'{sites[i]} Monthly Rainfall Comparison: All Instruments', fontsize=10)
-#     plt.xticks([i + 1.5*bar_width for i in index], months, rotation=45, ha='right')
-#     plt.legend(fontsize='small')
-
-#     for bars in [bars1, bars2, bars3, bars4]:
-#         for bar in bars:
-#             yval = bar.get_height()
-#             plt.text(bar.get_x() + bar.get_width()/2, yval, round(yval, 1), ha='center', va='bottom', fontsize=6)
-
-#     plt.savefig(data_destination + sites[i] + f"\\total_rainfall\\test\\{sites[i]}_monthly_rainfall_all_instruments.png")
-    
-#     plt.clf()
-#     plt.close()
-
-    # ====================================================================================================    
-    # ====================================================================================================    
-    # ====================================================================================================    
-
-
-
-
-
-    # """
-    # =============================================================================================================================
-    # Create wind rose plots of the 3D PAWS station data as well as the TSMS reference station. COMPLETE RECORDS
-    # =============================================================================================================================
-    # """
+    """
+    =============================================================================================================================
+    Create wind rose plots of the 3D PAWS station data as well as the TSMS reference station. COMPLETE RECORDS
+    =============================================================================================================================
+    """
     # print(f"{station_directories[i][8:14]}: Wind roses.")
 
     # # 3D PAWS  ------------------------------------------------------------------------------------------------------------------
@@ -1266,12 +1037,11 @@ Create bar charts for daily 3D PAWS rainfall accumulation (per site) compared to
     # plt.clf()
     # plt.close()
 
-
-    # """
-    # =============================================================================================================================
-    # Create time series plots of the 3 temperature sensors compared to TSMS. MONTHLY RECORDS
-    # =============================================================================================================================
-    # """
+    """
+    =============================================================================================================================
+    Create time series plots of the 3 temperature sensors compared to TSMS. MONTHLY RECORDS
+    =============================================================================================================================
+    """
     # print(f"{station_directories[i][:len(station_directories[i])-1]} Temperature Comparison")
 
     # tsms_df_FILTERED_2 = tsms_df_FILTERED[paws_df_FILTERED.index[0]:paws_df_FILTERED.index[-1]]
@@ -1307,3 +1077,219 @@ Create bar charts for daily 3D PAWS rainfall accumulation (per site) compared to
     #     plt.clf()
     #     plt.close()
 
+
+"""
+=============================================================================================================================
+Create a time series plot of each individual 3D PAWS station data versus the TSMS reference station. COMPLETE RECORDS
+=============================================================================================================================
+"""
+# sites = {
+#     0:"Ankara", 1:"Konya", 2:"Adana"
+# }
+# station_map = {
+#     0:[0,1,2], 1:[3,4,5], 2:[6,7,8]
+# }
+
+# for i in range(3):
+#     print(f"\t{sites[i]}: Rainfall accumulation")
+
+#     inst_1 = paws_dfs[station_map[i][0]].copy(deep=True)
+#     inst_2 = paws_dfs[station_map[i][1]].copy(deep=True)
+#     inst_3 = paws_dfs[station_map[i][2]].copy(deep=True)
+#     tsms_ref = tsms_dfs[i].copy(deep=True)
+
+#     inst_1.reset_index(inplace=True)
+#     inst_2.reset_index(inplace=True)
+#     inst_3.reset_index(inplace=True)
+#     tsms_ref.reset_index(inplace=True)
+
+#     merged_df = pd.merge(inst_1, inst_2, on='date', suffixes=('_1', '_2'))
+#     merged_df = pd.merge(merged_df, inst_3, on='date', suffixes=('', '_3'))
+#     merged_df = pd.merge(merged_df, tsms_ref, on='date', suffixes=('', '_tsms'))
+
+#     merged_df['cumulative_rainfall_3DPAWS_1'] = merged_df['tipping_1'].cumsum()
+#     merged_df['cumulative_rainfall_3DPAWS_2'] = merged_df['tipping_2'].cumsum()
+#     merged_df['cumulative_rainfall_3DPAWS_3'] = merged_df['tipping'].cumsum()
+#     merged_df['cumulative_rainfall_TSMS'] = merged_df['total_rainfall'].cumsum()
+
+#     plt.figure(figsize=(20, 12))
+
+#     plt.plot(merged_df['date'], merged_df['cumulative_rainfall_3DPAWS_1'], marker='.', markersize=1, label=f"TSMS0{station_map[i][0]} 3D PAWS")
+#     plt.plot(merged_df['date'], merged_df['cumulative_rainfall_3DPAWS_2'], marker='.', markersize=1, label=f"TSMS0{station_map[i][1]} 3D PAWS")
+#     plt.plot(merged_df['date'], merged_df['cumulative_rainfall_3DPAWS_3'], marker='.', markersize=1, label=f"TSMS0{station_map[i][2]} 3D PAWS")
+#     plt.plot(merged_df['date'], merged_df['cumulative_rainfall_TSMS'], marker='.', markersize=1, label=f'{sites[i]} TSMS Reference')
+
+#     plt.title(f'{sites[i]} Rainfall Accumulation')
+#     plt.xlabel('Date')
+#     plt.ylabel('Rainfall (mm)')
+#     plt.xticks(rotation=45)
+
+#     plt.legend()
+
+#     plt.grid(True)
+#     plt.tight_layout()
+
+#     #plt.savefig(data_destination+station_directories[i]+f"total_rainfall/raw/{station_directories[i][8:14]}_rainfall_accumulation_TEST.png")
+#     plt.savefig(data_destination+sites[i]+f"\\total_rainfall\\{sites[i]}_rainfall_accumulation.png")
+
+#     plt.clf()
+#     plt.close()
+
+
+"""
+=============================================================================================================================
+Create bar charts for daily 3D PAWS rainfall accumulation (per site) compared to TSMS rainfall accumulation. MONTHLY RECORDS
+=============================================================================================================================
+"""
+# sites = {
+#     0:"Ankara", 1:"Konya", 2:"Adana"
+# }
+# station_map = {
+#     0:[0,1,2], 1:[3,4,5], 2:[6,7,8]
+# }
+
+# for i in range(3):
+#     print(f"{sites[i]}: Bar charts for rainfall accumulation -- daily totals [ALL INSTRUMENTS PER SITE]")
+
+#     inst_1 = paws_dfs[station_map[i][0]].copy(deep=True)
+#     inst_2 = paws_dfs[station_map[i][1]].copy(deep=True)
+#     inst_3 = paws_dfs[station_map[i][2]].copy(deep=True)
+#     tsms_ref = tsms_dfs[i].copy(deep=True)
+
+#     inst_1.reset_index(inplace=True)
+#     inst_2.reset_index(inplace=True)
+#     inst_3.reset_index(inplace=True)
+#     tsms_ref.reset_index(inplace=True)
+        
+#     for year_month in set(inst_1['year_month']) & \
+#                         set(inst_2['year_month']) & \
+#                             set(inst_3['year_month']) & \
+#                                 set(tsms_ref['year_month']):
+#         inst_1_grouped = inst_1[inst_1['year_month'] == year_month]
+#         inst_2_grouped = inst_2[inst_2['year_month'] == year_month]
+#         inst_3_grouped = inst_3[inst_3['year_month'] == year_month]
+#         tsms_grouped = tsms_ref[tsms_ref['year_month'] == year_month]
+
+#         print(f"{sites[i]} at {year_month}")
+
+#         merged_df = pd.merge(inst_1_grouped, inst_2_grouped, on='date', suffixes=('_1', '_2'))
+#         merged_df = pd.merge(merged_df, inst_3_grouped, on='date', suffixes=('', '_3'))
+#         merged_df = pd.merge(merged_df, tsms_grouped, on='date', suffixes=('', '_tsms'))
+
+#         merged_df['daily_rainfall_1'] = merged_df['tipping_1']    # Calculate daily rainfall totals
+#         merged_df['daily_rainfall_2'] = merged_df['tipping_2']
+#         merged_df['daily_rainfall_3'] = merged_df['tipping']
+#         merged_df['daily_rainfall_TSMS'] = merged_df['total_rainfall']
+
+#         #merged_df.to_csv(f"C:\\Users\\Becky\\Downloads\\{sites[i]}_{year_month}_merged_df_FINAL.csv")
+#         #merged_df.to_csv(f"/Users/rzieber/Downloads/{sites[i]}_{year_month}_merged_df_FINAL.csv")
+        
+#         daily_totals = merged_df.groupby('year_month_day')[     # Sum daily rainfall by date
+#             ['daily_rainfall_1', 'daily_rainfall_2', 'daily_rainfall_3', 'daily_rainfall_TSMS']
+#         ].sum().reset_index()
+
+#         days = daily_totals['year_month_day'].dt.day
+#         values_1 = daily_totals['daily_rainfall_1']
+#         values_2 = daily_totals['daily_rainfall_2']
+#         values_3 = daily_totals['daily_rainfall_3']
+#         values_tsms = daily_totals['daily_rainfall_TSMS']
+
+#         index = range(len(days))
+
+#         plt.figure(figsize=(20, 12), constrained_layout=True)
+
+#         bar_width = 0.2
+#         bars1 = plt.bar(index, values_1, width=bar_width, color='blue', label=f'3DPAWS TSMS0{station_map[i][0]}')
+#         bars2 = plt.bar([i + bar_width for i in index], values_2, width=bar_width, color='orange', label=f'3DPAWS TSMS0{station_map[i][1]}')
+#         bars3 = plt.bar([i + 2*bar_width for i in index], values_3, width=bar_width, color='green', label=f'3DPAWS TSMS0{station_map[i][2]}')
+#         bars4 = plt.bar([i + 3*bar_width for i in index], values_tsms, width=bar_width, color='red', label='TSMS Reference')
+        
+#         plt.xlabel(f'Day in {year_month}', fontsize=8)          # Add labels, title, and legend
+#         plt.ylabel('Daily Rainfall (mm)', fontsize=8)
+#         plt.title(f'{sites[i]} Daily Rainfall Comparison: All Instruments for {year_month}', fontsize=8)
+#         plt.xticks([i + 1.5*bar_width for i in index], days, rotation=45)
+#         plt.ylim(0, 50)
+#         plt.legend()
+
+#         for bars in [bars1, bars2, bars3, bars4]:               # Add numerical values above bars
+#             for bar in bars:
+#                 yval = bar.get_height()
+#                 plt.text(bar.get_x() + bar.get_width()/2, yval, round(yval, 1), ha='center', va='bottom', fontsize=8)
+
+#         plt.savefig(data_destination + sites[i] + f"\\total_rainfall\\test\\{sites[i]}_{year_month}_daily_rainfall_all_instruments.png")    
+        
+#         plt.clf()
+#         plt.close()
+    
+"""
+=============================================================================================================================
+Create bar charts for daily 3D PAWS rainfall accumulation (per site) compared to TSMS rainfall accumulation. COMPLETE RECORDS
+=============================================================================================================================
+"""
+# sites = {
+#     0:"Ankara", 1:"Konya", 2:"Adana"
+# }
+# station_map = {
+#     0:[0,1,2], 1:[3,4,5], 2:[6,7,8]
+# }
+
+# for i in range(3):
+#     print(f"{sites[i]}: Bar charts for rainfall accumulation -- monthly totals [ALL INSTRUMENTS PER SITE]")
+
+#     inst_1 = paws_dfs[station_map[i][0]].copy(deep=True)
+#     inst_2 = paws_dfs[station_map[i][1]].copy(deep=True)
+#     inst_3 = paws_dfs[station_map[i][2]].copy(deep=True)
+#     tsms_ref = tsms_dfs[i].copy(deep=True)
+
+#     inst_1.reset_index(inplace=True)
+#     inst_2.reset_index(inplace=True)
+#     inst_3.reset_index(inplace=True)
+#     tsms_ref.reset_index(inplace=True)
+
+#     merged_df = pd.merge(inst_1, inst_2, on='date', suffixes=('_1', '_2'))
+#     merged_df = pd.merge(merged_df, inst_3, on='date', suffixes=('', '_3'))
+#     merged_df = pd.merge(merged_df, tsms_ref, on='date', suffixes=('', '_tsms'))
+
+#     merged_df['monthly_rainfall_1'] = merged_df['tipping_1']
+#     merged_df['monthly_rainfall_2'] = merged_df['tipping_2']
+#     merged_df['monthly_rainfall_3'] = merged_df['tipping']
+#     merged_df['monthly_rainfall_TSMS'] = merged_df['total_rainfall']
+
+#     #merged_df.to_csv(f"C:\\Users\\Becky\\Downloads\\{sites[i]}_merged_df_FINAL_1-19-25.csv")
+#     #merged_df.to_csv(f"/Users/rzieber/Downloads/{sites[i]}_{year_month}_merged_df_FINAL.csv")
+
+#     monthly_totals = merged_df.groupby('year_month')[
+#         ['monthly_rainfall_1', 'monthly_rainfall_2', 'monthly_rainfall_3', 'monthly_rainfall_TSMS']
+#     ].sum().reset_index()
+
+#     months = monthly_totals['year_month']
+#     values_1 = monthly_totals['monthly_rainfall_1']
+#     values_2 = monthly_totals['monthly_rainfall_2']
+#     values_3 = monthly_totals['monthly_rainfall_3']
+#     values_tsms = monthly_totals['monthly_rainfall_TSMS']
+
+#     index = range(len(months))
+
+#     plt.figure(figsize=(20, 12), constrained_layout=True)
+
+#     bar_width = 0.2
+#     bars1 = plt.bar(index, values_1, width=bar_width, color='blue', label=f'3DPAWS TSMS0{station_map[i][0]}')
+#     bars2 = plt.bar([i + bar_width for i in index], values_2, width=bar_width, color='orange', label=f'3DPAWS TSMS0{station_map[i][1]}')
+#     bars3 = plt.bar([i + 2*bar_width for i in index], values_3, width=bar_width, color='green', label=f'3DPAWS TSMS0{station_map[i][2]}')
+#     bars4 = plt.bar([i + 3*bar_width for i in index], values_tsms, width=bar_width, color='red', label='TSMS Reference')
+
+#     plt.xlabel('Month', fontsize=8)
+#     plt.ylabel('Monthly Rainfall (mm)', fontsize=8)
+#     plt.title(f'{sites[i]} Monthly Rainfall Comparison: All Instruments', fontsize=10)
+#     plt.xticks([i + 1.5*bar_width for i in index], months, rotation=45, ha='right')
+#     plt.legend(fontsize='small')
+
+#     for bars in [bars1, bars2, bars3, bars4]:
+#         for bar in bars:
+#             yval = bar.get_height()
+#             plt.text(bar.get_x() + bar.get_width()/2, yval, round(yval, 1), ha='center', va='bottom', fontsize=6)
+
+#     plt.savefig(data_destination + sites[i] + f"\\total_rainfall\\test\\{sites[i]}_monthly_rainfall_all_instruments.png")
+    
+#     plt.clf()
+#     plt.close()
