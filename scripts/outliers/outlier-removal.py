@@ -33,7 +33,7 @@ from resources import functions as func
 
 data_origin = r"C:\\Users\\Becky\\Documents\\UCAR_ImportantStuff\\Turkiye\\data\\"
 #data_origin = r"/Users/rzieber/Documents/3D-PAWS/Turkiye/reformatted/CSV_Format/analysis/"
-data_destination = r"C:\\Users\\Becky\\Documents\\UCAR_ImportantStuff\Turkiye\\plots\\test\\"
+data_destination = r"C:\\Users\\Becky\\Documents\\UCAR_ImportantStuff\\Turkiye\\plots\\time_series\\pressure_per_site\\test\\"
 #data_destination = r"/Users/rzieber/Documents/3D-PAWS/Turkiye/plots/full_dataperiod/time_series/"
 
 outlier_reasons = [
@@ -1136,6 +1136,176 @@ Create a time series plot of each individual 3D PAWS station data versus the TSM
 #     plt.close()
 
 
+# """
+# =============================================================================================================================
+# Create a time series plot of each individual 3D PAWS station data versus the TSMS reference station. COMPLETE RECORDS
+# =============================================================================================================================
+# """
+# sites = {
+#     0:"Ankara", 1:"Konya", 2:"Adana"
+# }
+# station_map = {
+#     0:[0,1,2], 1:[3,4,5], 2:[6,7,8]
+# }
+
+# for i in range(3):
+#     print(f"\t{sites[i]}: Actual & sea level pressure [PER SITE]")
+
+#     inst_1 = paws_dfs[station_map[i][0]].copy(deep=True)
+#     inst_2 = paws_dfs[station_map[i][1]].copy(deep=True)
+#     inst_3 = paws_dfs[station_map[i][2]].copy(deep=True)
+#     tsms_ref = tsms_dfs[i*3].copy(deep=True)
+
+#     inst_1.reset_index(inplace=True)
+#     inst_2.reset_index(inplace=True)
+#     inst_3.reset_index(inplace=True)
+#     tsms_ref.reset_index(inplace=True)
+
+#     merged_df = pd.merge(inst_1, inst_2, on='date', suffixes=('_1', '_2'))
+#     merged_df = pd.merge(merged_df, inst_3, on='date', suffixes=('', '_3'))
+#     merged_df = pd.merge(merged_df, tsms_ref, on='date', suffixes=('', '_tsms'))
+
+#     print("\t\tActual Pressure")
+
+#     plt.figure(figsize=(20, 12))
+
+#     plt.plot(merged_df['date'], merged_df['bmp2_pres_1'], marker='.', markersize=1, label=f"TSMS0{station_map[i][0]} 3D PAWS")
+#     plt.plot(merged_df['date'], merged_df['bmp2_pres_2'], marker='.', markersize=1, label=f"TSMS0{station_map[i][1]} 3D PAWS")
+#     plt.plot(merged_df['date'], merged_df['bmp2_pres'], marker='.', markersize=1, label=f"TSMS0{station_map[i][2]} 3D PAWS")
+#     plt.plot(merged_df['date'], merged_df['actual_pressure'], marker='.', markersize=1, label=f'{sites[i]} TSMS Reference')
+
+#     plt.title(f'{sites[i]} Station Pressure')
+#     plt.xlabel('Date')
+#     plt.ylabel('Pressure (hPa)')
+#     plt.xticks(rotation=45)
+
+#     plt.legend()
+
+#     plt.grid(True)
+#     plt.tight_layout()
+
+#     #plt.savefig(data_destination+station_directories[i]+f"total_rainfall/raw/{station_directories[i][8:14]}_rainfall_accumulation_TEST.png")
+#     plt.savefig(data_destination+sites[i]+f"\\actual_pressure\\{sites[i]}_station_pressure.png")
+
+#     plt.clf()
+#     plt.close()
+
+#     print("\t\tSea Level Pressure")
+
+#     plt.figure(figsize=(20, 12))
+
+#     plt.plot(merged_df['date'], merged_df['bmp2_slp_1'], marker='.', markersize=1, label=f"TSMS0{station_map[i][0]} 3D PAWS")
+#     plt.plot(merged_df['date'], merged_df['bmp2_slp_2'], marker='.', markersize=1, label=f"TSMS0{station_map[i][1]} 3D PAWS")
+#     plt.plot(merged_df['date'], merged_df['bmp2_slp'], marker='.', markersize=1, label=f"TSMS0{station_map[i][2]} 3D PAWS")
+#     plt.plot(merged_df['date'], merged_df['sea_level_pressure'], marker='.', markersize=1, label=f'{sites[i]} TSMS Reference')
+
+#     plt.title(f'{sites[i]} Sea Level Pressure')
+#     plt.xlabel('Date')
+#     plt.ylabel('Sea Level Pressure (hPa)')
+#     plt.xticks(rotation=45)
+
+#     plt.legend()
+
+#     plt.grid(True)
+#     plt.tight_layout()
+
+#     #plt.savefig(data_destination+station_directories[i]+f"total_rainfall/raw/{station_directories[i][8:14]}_rainfall_accumulation_TEST.png")
+#     plt.savefig(data_destination+sites[i]+f"\\sea_level_pressure\\{sites[i]}_station_sea_level_pressure.png")
+
+#     plt.clf()
+#     plt.close()
+
+"""
+=============================================================================================================================
+Create a time series plot of each individual 3D PAWS station data versus the TSMS reference station. MONTHLY RECORDS
+=============================================================================================================================
+"""
+# sites = {
+#     0:"Ankara", 1:"Konya", 2:"Adana"
+# }
+# station_map = {
+#     0:[0,1,2], 1:[3,4,5], 2:[6,7,8]
+# }
+
+# for i in range(3):
+#     print(f"\t{sites[i]}: Actual & sea level pressure [PER SITE]")
+
+#     inst_1 = paws_dfs[station_map[i][0]].copy(deep=True)
+#     inst_2 = paws_dfs[station_map[i][1]].copy(deep=True)
+#     inst_3 = paws_dfs[station_map[i][2]].copy(deep=True)
+#     tsms_ref = tsms_dfs[i*3].copy(deep=True)
+
+#     inst_1.reset_index(inplace=True)
+#     inst_2.reset_index(inplace=True)
+#     inst_3.reset_index(inplace=True)
+#     tsms_ref.reset_index(inplace=True)
+
+#     for year_month in set(inst_1['year_month']) & \
+#                         set(inst_2['year_month']) & \
+#                             set(inst_3['year_month']) & \
+#                                 set(tsms_ref['year_month']):
+#         inst_1_grouped = inst_1[inst_1['year_month'] == year_month]
+#         inst_2_grouped = inst_2[inst_2['year_month'] == year_month]
+#         inst_3_grouped = inst_3[inst_3['year_month'] == year_month]
+#         tsms_grouped = tsms_ref[tsms_ref['year_month'] == year_month]
+
+#         merged_df = pd.merge(inst_1_grouped, inst_2_grouped, on='date', suffixes=('_1', '_2'))
+#         merged_df = pd.merge(merged_df, inst_3_grouped, on='date', suffixes=('', '_3'))
+#         merged_df = pd.merge(merged_df, tsms_grouped, on='date', suffixes=('', '_tsms'))
+
+#         print("\t\tActual Pressure")
+#         print(f"\t\t\t{sites[i]} at {year_month}")
+
+#         plt.figure(figsize=(20, 12))
+
+#         plt.plot(merged_df['date'], merged_df['bmp2_pres_1'], marker='.', markersize=1, label=f"TSMS0{station_map[i][0]} 3D PAWS")
+#         plt.plot(merged_df['date'], merged_df['bmp2_pres_2'], marker='.', markersize=1, label=f"TSMS0{station_map[i][1]} 3D PAWS")
+#         plt.plot(merged_df['date'], merged_df['bmp2_pres'], marker='.', markersize=1, label=f"TSMS0{station_map[i][2]} 3D PAWS")
+#         plt.plot(merged_df['date'], merged_df['actual_pressure'], marker='.', markersize=1, label=f'{sites[i]} TSMS Reference')
+
+#         plt.title(f'{sites[i]} {year_month} Station Pressure')
+#         plt.xlabel('Date')
+#         plt.ylabel('Pressure (hPa)')
+#         plt.xticks(rotation=45)
+
+#         plt.legend()
+
+#         plt.grid(True)
+#         plt.tight_layout()
+
+#         #plt.savefig(data_destination+station_directories[i]+f"total_rainfall/raw/{station_directories[i][8:14]}_rainfall_accumulation_TEST.png")
+#         plt.savefig(data_destination+sites[i]+f"\\actual_pressure\\{sites[i]}_{year_month}_station_pressure.png")
+
+#         plt.clf()
+#         plt.close()
+
+#         print("\t\tSea Level Pressure")
+#         print(f"\t\t\t{sites[i]} at {year_month}")
+
+#         plt.figure(figsize=(20, 12))
+
+#         plt.plot(merged_df['date'], merged_df['bmp2_slp_1'], marker='.', markersize=1, label=f"TSMS0{station_map[i][0]} 3D PAWS")
+#         plt.plot(merged_df['date'], merged_df['bmp2_slp_2'], marker='.', markersize=1, label=f"TSMS0{station_map[i][1]} 3D PAWS")
+#         plt.plot(merged_df['date'], merged_df['bmp2_slp'], marker='.', markersize=1, label=f"TSMS0{station_map[i][2]} 3D PAWS")
+#         plt.plot(merged_df['date'], merged_df['sea_level_pressure'], marker='.', markersize=1, label=f'{sites[i]} TSMS Reference')
+
+#         plt.title(f'{sites[i]} {year_month} Sea Level Pressure')
+#         plt.xlabel('Date')
+#         plt.ylabel('Sea Level Pressure (hPa)')
+#         plt.xticks(rotation=45)
+
+#         plt.legend()
+
+#         plt.grid(True)
+#         plt.tight_layout()
+
+#         #plt.savefig(data_destination+station_directories[i]+f"total_rainfall/raw/{station_directories[i][8:14]}_rainfall_accumulation_TEST.png")
+#         plt.savefig(data_destination+sites[i]+f"\\sea_level_pressure\\{sites[i]}_{year_month}_station_sea_level_pressure.png")
+
+#         plt.clf()
+#         plt.close()
+
+
 """
 =============================================================================================================================
 Create bar charts for daily 3D PAWS rainfall accumulation (per site) compared to TSMS rainfall accumulation. MONTHLY RECORDS
@@ -1226,70 +1396,70 @@ Create bar charts for daily 3D PAWS rainfall accumulation (per site) compared to
 Create bar charts for daily 3D PAWS rainfall accumulation (per site) compared to TSMS rainfall accumulation. COMPLETE RECORDS
 =============================================================================================================================
 """
-sites = {
-    0:"Ankara", 1:"Konya", 2:"Adana"
-}
-station_map = {
-    0:[0,1,2], 1:[3,4,5], 2:[6,7,8]
-}
+# sites = {
+#     0:"Ankara", 1:"Konya", 2:"Adana"
+# }
+# station_map = {
+#     0:[0,1,2], 1:[3,4,5], 2:[6,7,8]
+# }
 
-for i in range(3):
-    print(f"{sites[i]}: Bar charts for rainfall accumulation -- monthly totals [ALL INSTRUMENTS PER SITE]")
+# for i in range(3):
+#     print(f"{sites[i]}: Bar charts for rainfall accumulation -- monthly totals [ALL INSTRUMENTS PER SITE]")
 
-    inst_1 = paws_dfs[station_map[i][0]].copy(deep=True)
-    inst_2 = paws_dfs[station_map[i][1]].copy(deep=True)
-    inst_3 = paws_dfs[station_map[i][2]].copy(deep=True)
-    tsms_ref = tsms_dfs[i*3].copy(deep=True)
+#     inst_1 = paws_dfs[station_map[i][0]].copy(deep=True)
+#     inst_2 = paws_dfs[station_map[i][1]].copy(deep=True)
+#     inst_3 = paws_dfs[station_map[i][2]].copy(deep=True)
+#     tsms_ref = tsms_dfs[i*3].copy(deep=True)
 
-    inst_1.reset_index(inplace=True)
-    inst_2.reset_index(inplace=True)
-    inst_3.reset_index(inplace=True)
-    tsms_ref.reset_index(inplace=True)
+#     inst_1.reset_index(inplace=True)
+#     inst_2.reset_index(inplace=True)
+#     inst_3.reset_index(inplace=True)
+#     tsms_ref.reset_index(inplace=True)
 
-    merged_df = pd.merge(inst_1, inst_2, on='date', suffixes=('_1', '_2'))
-    merged_df = pd.merge(merged_df, inst_3, on='date', suffixes=('', '_3'))
-    merged_df = pd.merge(merged_df, tsms_ref, on='date', suffixes=('', '_tsms'))
+#     merged_df = pd.merge(inst_1, inst_2, on='date', suffixes=('_1', '_2'))
+#     merged_df = pd.merge(merged_df, inst_3, on='date', suffixes=('', '_3'))
+#     merged_df = pd.merge(merged_df, tsms_ref, on='date', suffixes=('', '_tsms'))
 
-    merged_df['monthly_rainfall_1'] = merged_df['tipping_1']
-    merged_df['monthly_rainfall_2'] = merged_df['tipping_2']
-    merged_df['monthly_rainfall_3'] = merged_df['tipping']
-    merged_df['monthly_rainfall_TSMS'] = merged_df['total_rainfall']
+#     merged_df['monthly_rainfall_1'] = merged_df['tipping_1']
+#     merged_df['monthly_rainfall_2'] = merged_df['tipping_2']
+#     merged_df['monthly_rainfall_3'] = merged_df['tipping']
+#     merged_df['monthly_rainfall_TSMS'] = merged_df['total_rainfall']
 
-    #merged_df.to_csv(f"C:\\Users\\Becky\\Downloads\\{sites[i]}_merged_df_FINAL_1-19-25.csv")
-    #merged_df.to_csv(f"/Users/rzieber/Downloads/{sites[i]}_{year_month}_merged_df_FINAL.csv")
+#     #merged_df.to_csv(f"C:\\Users\\Becky\\Downloads\\{sites[i]}_merged_df_FINAL_1-19-25.csv")
+#     #merged_df.to_csv(f"/Users/rzieber/Downloads/{sites[i]}_{year_month}_merged_df_FINAL.csv")
 
-    monthly_totals = merged_df.groupby('year_month')[
-        ['monthly_rainfall_1', 'monthly_rainfall_2', 'monthly_rainfall_3', 'monthly_rainfall_TSMS']
-    ].sum().reset_index()
+#     monthly_totals = merged_df.groupby('year_month')[
+#         ['monthly_rainfall_1', 'monthly_rainfall_2', 'monthly_rainfall_3', 'monthly_rainfall_TSMS']
+#     ].sum().reset_index()
 
-    months = monthly_totals['year_month']
-    values_1 = monthly_totals['monthly_rainfall_1']
-    values_2 = monthly_totals['monthly_rainfall_2']
-    values_3 = monthly_totals['monthly_rainfall_3']
-    values_tsms = monthly_totals['monthly_rainfall_TSMS']
+#     months = monthly_totals['year_month']
+#     values_1 = monthly_totals['monthly_rainfall_1']
+#     values_2 = monthly_totals['monthly_rainfall_2']
+#     values_3 = monthly_totals['monthly_rainfall_3']
+#     values_tsms = monthly_totals['monthly_rainfall_TSMS']
 
-    index = range(len(months))
+#     index = range(len(months))
 
-    plt.figure(figsize=(20, 12), constrained_layout=True)
+#     plt.figure(figsize=(20, 12), constrained_layout=True)
 
-    bar_width = 0.2
-    bars1 = plt.bar(index, values_1, width=bar_width, color='blue', label=f'3DPAWS TSMS0{station_map[i][0]}')
-    bars2 = plt.bar([i + bar_width for i in index], values_2, width=bar_width, color='orange', label=f'3DPAWS TSMS0{station_map[i][1]}')
-    bars3 = plt.bar([i + 2*bar_width for i in index], values_3, width=bar_width, color='green', label=f'3DPAWS TSMS0{station_map[i][2]}')
-    bars4 = plt.bar([i + 3*bar_width for i in index], values_tsms, width=bar_width, color='red', label='TSMS Reference')
+#     bar_width = 0.2
+#     bars1 = plt.bar(index, values_1, width=bar_width, color='blue', label=f'3DPAWS TSMS0{station_map[i][0]}')
+#     bars2 = plt.bar([i + bar_width for i in index], values_2, width=bar_width, color='orange', label=f'3DPAWS TSMS0{station_map[i][1]}')
+#     bars3 = plt.bar([i + 2*bar_width for i in index], values_3, width=bar_width, color='green', label=f'3DPAWS TSMS0{station_map[i][2]}')
+#     bars4 = plt.bar([i + 3*bar_width for i in index], values_tsms, width=bar_width, color='red', label='TSMS Reference')
 
-    plt.xlabel('Month', fontsize=8)
-    plt.ylabel('Monthly Rainfall (mm)', fontsize=8)
-    plt.title(f'{sites[i]} Monthly Rainfall Comparison: All Instruments', fontsize=10)
-    plt.xticks([i + 1.5*bar_width for i in index], months, rotation=45, ha='right')
-    plt.legend(fontsize='small')
+#     plt.xlabel('Month', fontsize=8)
+#     plt.ylabel('Monthly Rainfall (mm)', fontsize=8)
+#     plt.title(f'{sites[i]} Monthly Rainfall Comparison: All Instruments', fontsize=10)
+#     plt.xticks([i + 1.5*bar_width for i in index], months, rotation=45, ha='right')
+#     plt.legend(fontsize='small')
 
-    for bars in [bars1, bars2, bars3, bars4]:
-        for bar in bars:
-            yval = bar.get_height()
-            plt.text(bar.get_x() + bar.get_width()/2, yval, round(yval, 1), ha='center', va='bottom', fontsize=6)
+#     for bars in [bars1, bars2, bars3, bars4]:
+#         for bar in bars:
+#             yval = bar.get_height()
+#             plt.text(bar.get_x() + bar.get_width()/2, yval, round(yval, 1), ha='center', va='bottom', fontsize=6)
 
-    plt.savefig(data_destination + sites[i] + f"\\total_rainfall\\{sites[i]}_monthly_rainfall_all_instruments.png")
+#     plt.savefig(data_destination + sites[i] + f"\\total_rainfall\\{sites[i]}_monthly_rainfall_all_instruments.png")
     
-    plt.clf()
-    plt.close()
+#     plt.clf()
+#     plt.close()
