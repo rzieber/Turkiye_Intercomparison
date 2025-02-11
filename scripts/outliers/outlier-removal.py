@@ -89,7 +89,7 @@ for i in range(len(station_directories)):
     =============================================================================================================================
     """
     for file in station_files[i]:
-        if file.startswith("TSMS"): # 3D-PAWS records start w/ 'TSMS##', TSMS ref. records start w/ the site name
+        if file.startswith("TSMS"): # 3D-PAWS records start w/ 'TSMS', TSMS ref. records start w/ the site name
             paws_df = pd.read_csv( 
                             data_origin+station_directories[i]+file,
                             header=0,
@@ -331,7 +331,6 @@ for i in range(len(station_directories)):
             })
             paws_outliers = pd.concat([paws_outliers, outliers_to_add], ignore_index=True)
 
-    if station_directories[i] == "station_TSMS06/": paws_df_FILTERED.to_csv(f"C:\\Users\\Becky\\Downloads\\tsms06_pre-removal.csv")
     """
     ============================================================================================================================
     Phase 4: Manual removal of known outliers.
@@ -363,6 +362,52 @@ for i in range(len(station_directories)):
             'outlier_type': outlier_reasons[3]
         })
         paws_outliers = pd.concat([paws_outliers, outliers_to_add], ignore_index=True)
+
+    # Very low values at the start of the study period -- [NEEDS FIXING]
+    if i in [6,7,8]:    # Adana
+        existing_nulls_pres = paws_df_FILTERED['bmp2_pres'].isnull()
+
+        exclude_pressure_start = pd.to_datetime("2022-11-11 09:00:00")
+        exclude_pressure_end = pd.to_datetime("2022-11-11 10:30:00")
+
+        to_remove_pres = paws_df_FILTERED.loc[
+            (paws_df_FILTERED['date'] >= exclude_pressure_start) & (paws_df_FILTERED['date'] <= exclude_pressure_end), 'bmp2_pres'
+        ].copy()
+
+        paws_df_FILTERED.loc[
+            (paws_df_FILTERED['date'] >= exclude_pressure_start) & (paws_df_FILTERED['date'] <= exclude_pressure_end), 'bmp2_pres'
+        ] = np.nan
+
+        new_nulls_pres = paws_df_FILTERED['bmp2_pres'].isnull() & ~existing_nulls_pres
+
+        outliers_to_add_pres = pd.DataFrame({                                
+            'date': paws_df_FILTERED.loc[new_nulls_pres, 'date'],
+            'column_name': 'bmp2_pres',
+            'original_value': to_remove,
+            'outlier_type': outlier_reasons[3]
+        })
+        paws_outliers = pd.concat([paws_outliers, outliers_to_add_pres], ignore_index=True)
+
+
+        existing_nulls_slp = paws_df_FILTERED['bmp2_slp'].isnull()
+
+        to_remove_slp = paws_df_FILTERED.loc[
+            (paws_df_FILTERED['date'] >= exclude_pressure_start) & (paws_df_FILTERED['date'] <= exclude_pressure_end), 'bmp2_slp'
+        ].copy()
+
+        paws_df_FILTERED.loc[
+            (paws_df_FILTERED['date'] >= exclude_pressure_start) & (paws_df_FILTERED['date'] <= exclude_pressure_end), 'bmp2_slp'
+        ] = np.nan
+
+        new_nulls_slp = paws_df_FILTERED['bmp2_slp'].isnull() & ~existing_nulls_slp
+
+        outliers_to_add_slp = pd.DataFrame({                                
+            'date': paws_df_FILTERED.loc[new_nulls_slp, 'date'],
+            'column_name': 'bmp2_slp',
+            'original_value': to_remove,
+            'outlier_type': outlier_reasons[3]
+        })
+        paws_outliers = pd.concat([paws_outliers, outliers_to_add_slp], ignore_index=True)
 
     # Erroneously high values -- possibly faulty connector, or manual manipulation of the gauge by the public
     if station_directories[i] == "station_TSMS08/":
@@ -1220,90 +1265,90 @@ Create a time series plot of each individual 3D PAWS station data versus the TSM
 Create a time series plot of each individual 3D PAWS station data versus the TSMS reference station. MONTHLY RECORDS
 =============================================================================================================================
 """
-# sites = {
-#     0:"Ankara", 1:"Konya", 2:"Adana"
-# }
-# station_map = {
-#     0:[0,1,2], 1:[3,4,5], 2:[6,7,8]
-# }
+sites = {
+    0:"Ankara", 1:"Konya", 2:"Adana"
+}
+station_map = {
+    0:[0,1,2], 1:[3,4,5], 2:[6,7,8]
+}
 
-# for i in range(3):
-#     print(f"\t{sites[i]}: Actual & sea level pressure [PER SITE]")
+for i in range(3):
+    print(f"\t{sites[i]}: Actual & sea level pressure [PER SITE]")
 
-#     inst_1 = paws_dfs[station_map[i][0]].copy(deep=True)
-#     inst_2 = paws_dfs[station_map[i][1]].copy(deep=True)
-#     inst_3 = paws_dfs[station_map[i][2]].copy(deep=True)
-#     tsms_ref = tsms_dfs[i*3].copy(deep=True)
+    inst_1 = paws_dfs[station_map[i][0]].copy(deep=True)
+    inst_2 = paws_dfs[station_map[i][1]].copy(deep=True)
+    inst_3 = paws_dfs[station_map[i][2]].copy(deep=True)
+    tsms_ref = tsms_dfs[i*3].copy(deep=True)
 
-#     inst_1.reset_index(inplace=True)
-#     inst_2.reset_index(inplace=True)
-#     inst_3.reset_index(inplace=True)
-#     tsms_ref.reset_index(inplace=True)
+    inst_1.reset_index(inplace=True)
+    inst_2.reset_index(inplace=True)
+    inst_3.reset_index(inplace=True)
+    tsms_ref.reset_index(inplace=True)
 
-#     for year_month in set(inst_1['year_month']) & \
-#                         set(inst_2['year_month']) & \
-#                             set(inst_3['year_month']) & \
-#                                 set(tsms_ref['year_month']):
-#         inst_1_grouped = inst_1[inst_1['year_month'] == year_month]
-#         inst_2_grouped = inst_2[inst_2['year_month'] == year_month]
-#         inst_3_grouped = inst_3[inst_3['year_month'] == year_month]
-#         tsms_grouped = tsms_ref[tsms_ref['year_month'] == year_month]
+    for year_month in set(inst_1['year_month']) & \
+                        set(inst_2['year_month']) & \
+                            set(inst_3['year_month']) & \
+                                set(tsms_ref['year_month']):
+        inst_1_grouped = inst_1[inst_1['year_month'] == year_month]
+        inst_2_grouped = inst_2[inst_2['year_month'] == year_month]
+        inst_3_grouped = inst_3[inst_3['year_month'] == year_month]
+        tsms_grouped = tsms_ref[tsms_ref['year_month'] == year_month]
 
-#         merged_df = pd.merge(inst_1_grouped, inst_2_grouped, on='date', suffixes=('_1', '_2'))
-#         merged_df = pd.merge(merged_df, inst_3_grouped, on='date', suffixes=('', '_3'))
-#         merged_df = pd.merge(merged_df, tsms_grouped, on='date', suffixes=('', '_tsms'))
+        merged_df = pd.merge(inst_1_grouped, inst_2_grouped, on='date', suffixes=('_1', '_2'))
+        merged_df = pd.merge(merged_df, inst_3_grouped, on='date', suffixes=('', '_3'))
+        merged_df = pd.merge(merged_df, tsms_grouped, on='date', suffixes=('', '_tsms'))
 
-#         print("\t\tActual Pressure")
-#         print(f"\t\t\t{sites[i]} at {year_month}")
+        print("\t\tActual Pressure")
+        print(f"\t\t\t{sites[i]} at {year_month}")
 
-#         plt.figure(figsize=(20, 12))
+        plt.figure(figsize=(20, 12))
 
-#         plt.plot(merged_df['date'], merged_df['bmp2_pres_1'], marker='.', markersize=1, label=f"TSMS0{station_map[i][0]} 3D PAWS")
-#         plt.plot(merged_df['date'], merged_df['bmp2_pres_2'], marker='.', markersize=1, label=f"TSMS0{station_map[i][1]} 3D PAWS")
-#         plt.plot(merged_df['date'], merged_df['bmp2_pres'], marker='.', markersize=1, label=f"TSMS0{station_map[i][2]} 3D PAWS")
-#         plt.plot(merged_df['date'], merged_df['actual_pressure'], marker='.', markersize=1, label=f'{sites[i]} TSMS Reference')
+        plt.plot(merged_df['date'], merged_df['bmp2_pres_1'], marker='.', markersize=1, label=f"TSMS0{station_map[i][0]} 3D PAWS")
+        plt.plot(merged_df['date'], merged_df['bmp2_pres_2'], marker='.', markersize=1, label=f"TSMS0{station_map[i][1]} 3D PAWS")
+        plt.plot(merged_df['date'], merged_df['bmp2_pres'], marker='.', markersize=1, label=f"TSMS0{station_map[i][2]} 3D PAWS")
+        plt.plot(merged_df['date'], merged_df['actual_pressure'], marker='.', markersize=1, label=f'{sites[i]} TSMS Reference')
 
-#         plt.title(f'{sites[i]} {year_month} Station Pressure')
-#         plt.xlabel('Date')
-#         plt.ylabel('Pressure (hPa)')
-#         plt.xticks(rotation=45)
+        plt.title(f'{sites[i]} {year_month} Station Pressure')
+        plt.xlabel('Date')
+        plt.ylabel('Pressure (hPa)')
+        plt.xticks(rotation=45)
 
-#         plt.legend()
+        plt.legend()
 
-#         plt.grid(True)
-#         plt.tight_layout()
+        plt.grid(True)
+        plt.tight_layout()
 
-#         #plt.savefig(data_destination+station_directories[i]+f"total_rainfall/raw/{station_directories[i][8:14]}_rainfall_accumulation_TEST.png")
-#         plt.savefig(data_destination+sites[i]+f"\\actual_pressure\\{sites[i]}_{year_month}_station_pressure.png")
+        #plt.savefig(data_destination+station_directories[i]+f"total_rainfall/raw/{station_directories[i][8:14]}_rainfall_accumulation_TEST.png")
+        plt.savefig(data_destination+sites[i]+f"\\actual_pressure\\{sites[i]}_{year_month}_station_pressure.png")
 
-#         plt.clf()
-#         plt.close()
+        plt.clf()
+        plt.close()
 
-#         print("\t\tSea Level Pressure")
-#         print(f"\t\t\t{sites[i]} at {year_month}")
+        print("\t\tSea Level Pressure")
+        print(f"\t\t\t{sites[i]} at {year_month}")
 
-#         plt.figure(figsize=(20, 12))
+        plt.figure(figsize=(20, 12))
 
-#         plt.plot(merged_df['date'], merged_df['bmp2_slp_1'], marker='.', markersize=1, label=f"TSMS0{station_map[i][0]} 3D PAWS")
-#         plt.plot(merged_df['date'], merged_df['bmp2_slp_2'], marker='.', markersize=1, label=f"TSMS0{station_map[i][1]} 3D PAWS")
-#         plt.plot(merged_df['date'], merged_df['bmp2_slp'], marker='.', markersize=1, label=f"TSMS0{station_map[i][2]} 3D PAWS")
-#         plt.plot(merged_df['date'], merged_df['sea_level_pressure'], marker='.', markersize=1, label=f'{sites[i]} TSMS Reference')
+        plt.plot(merged_df['date'], merged_df['bmp2_slp_1'], marker='.', markersize=1, label=f"TSMS0{station_map[i][0]} 3D PAWS")
+        plt.plot(merged_df['date'], merged_df['bmp2_slp_2'], marker='.', markersize=1, label=f"TSMS0{station_map[i][1]} 3D PAWS")
+        plt.plot(merged_df['date'], merged_df['bmp2_slp'], marker='.', markersize=1, label=f"TSMS0{station_map[i][2]} 3D PAWS")
+        plt.plot(merged_df['date'], merged_df['sea_level_pressure'], marker='.', markersize=1, label=f'{sites[i]} TSMS Reference')
 
-#         plt.title(f'{sites[i]} {year_month} Sea Level Pressure')
-#         plt.xlabel('Date')
-#         plt.ylabel('Sea Level Pressure (hPa)')
-#         plt.xticks(rotation=45)
+        plt.title(f'{sites[i]} {year_month} Sea Level Pressure')
+        plt.xlabel('Date')
+        plt.ylabel('Sea Level Pressure (hPa)')
+        plt.xticks(rotation=45)
 
-#         plt.legend()
+        plt.legend()
 
-#         plt.grid(True)
-#         plt.tight_layout()
+        plt.grid(True)
+        plt.tight_layout()
 
-#         #plt.savefig(data_destination+station_directories[i]+f"total_rainfall/raw/{station_directories[i][8:14]}_rainfall_accumulation_TEST.png")
-#         plt.savefig(data_destination+sites[i]+f"\\sea_level_pressure\\{sites[i]}_{year_month}_station_sea_level_pressure.png")
+        #plt.savefig(data_destination+station_directories[i]+f"total_rainfall/raw/{station_directories[i][8:14]}_rainfall_accumulation_TEST.png")
+        plt.savefig(data_destination+sites[i]+f"\\sea_level_pressure\\{sites[i]}_{year_month}_station_sea_level_pressure.png")
 
-#         plt.clf()
-#         plt.close()
+        plt.clf()
+        plt.close()
 
 
 """
