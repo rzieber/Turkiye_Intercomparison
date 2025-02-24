@@ -31,17 +31,8 @@ sys.path.append(str(Path(__file__).resolve().parents[2]))
 from resources import functions as func
 
 
-<<<<<<< HEAD
-data_origin = r"C:\\Users\\Becky\\Documents\\UCAR_ImportantStuff\\Turkiye\\scratchpad\\data\\"
-#data_origin = r"/Users/rzieber/Documents/3D-PAWS/Turkiye/reformatted/CSV_Format/analysis/"
-data_destination = r"C:\\Users\\Becky\\Documents\\UCAR_ImportantStuff\\Turkiye\\scratchpad\\plots\\"
-#data_destination = r"/Users/rzieber/Documents/3D-PAWS/Turkiye/plots/full_dataperiod/time_series/"
-=======
-#data_origin = r"C:\\Users\\Becky\\Documents\\UCAR_ImportantStuff\\Turkiye\\data\\"
-data_origin = r"/Users/rzieber/Documents/3D-PAWS/Turkiye/reformatted/CSV_Format/analysis/"
-#data_destination = r"C:\\Users\\Becky\\Documents\\UCAR_ImportantStuff\\Turkiye\\plots\\time_series\\pressure_per_site\\test\\"
-data_destination = r"/Users/rzieber/Documents/3D-PAWS/Turkiye/plots/full_dataperiod/time_series/"
->>>>>>> 33e7b6d26804d839cedc761cd4d1f8fa1b324518
+data_origin = r"C:\\Users\\Becky\\Documents\\Turkiye\\scratchpad\\data\\"
+data_destination = r"C:\\Users\\Becky\\Documents\\Turkiye\\scratchpad\\plots\\"
 
 outlier_reasons = [
     "null", "timestamp reset", "threshold", "manual removal", "htu_trend_switch"
@@ -55,11 +46,11 @@ variable_mapper = { # TSMS : 3DPAWS
     "humidity":["bme2_hum", "htu_hum"],
     "actual_pressure":["bmp2_pres"],
     "sea_level_pressure":["bmp2_slp"],
-    "avg_wind_dir":["wind_dir"], # both using 1-minute average
-    "avg_wind_speed":["wind_speed"], # both usng 1-minute average
+    "avg_wind_dir":["wind_dir"],
+    "avg_wind_speed":["wind_speed"], 
     "total_rainfall":["tipping"]
 }
-# station_directories = [
+# station_directories = [ # i really oughta do pathlib for os agnostic code, this is silly
 #     "station_TSMS00/", "station_TSMS01/", "station_TSMS02/",   
 #     "station_TSMS03/", "station_TSMS04/", "station_TSMS05/",
 #     "station_TSMS06/", "station_TSMS07/", "station_TSMS08/"
@@ -163,7 +154,7 @@ for i in range(len(station_directories)):
     =============================================================================================================================
     =============================================================================================================================
     """
-
+    
     paws_outliers = pd.DataFrame(columns=['date', 'column_name', 'original_value', 'outlier_type'])
     tsms_outliers = pd.DataFrame(columns=['date', 'column_name', 'original_value', 'outlier_type'])
     
@@ -178,6 +169,7 @@ for i in range(len(station_directories)):
 
     print()
     print("Starting outlier removal for ", station_directories[i][8:14])
+    
     """
     =============================================================================================================================
     Phase 1: Filter out nulls (-999.99)
@@ -470,8 +462,6 @@ for i in range(len(station_directories)):
 
     paws_df_FILTERED.reset_index(drop=True, inplace=True)   # Reset the index to ensure it is a simple range
 
-    #existing_nulls = paws_df_FILTERED['htu_temp'].isnull()
-
     paws_df_FILTERED['htu_temp'] = pd.to_numeric(paws_df_FILTERED['htu_temp'], errors='coerce')
 
 # -------------------------------------------------------------------------------------------------------------------------------
@@ -524,13 +514,11 @@ for i in range(len(station_directories)):
                 'original_value':neighbor,
                 'outlier_type':outlier_reasons[4]
             })
-            # replace the original value in neighbor with np.nan
+            # replace the original value in neighbor with nan
             paws_df_FILTERED.loc[j, 'htu_temp'] = np.nan
             # do not update ground truth, let neighbor increase with next loop
         else: 
             ground_truth = neighbor
-
-    #new_nulls = paws_df_FILTERED['htu_temp'].isnull() & ~existing_nulls
 
     paws_outliers = pd.concat([paws_outliers, pd.Series(outliers_to_add)], ignore_index=True)
 
