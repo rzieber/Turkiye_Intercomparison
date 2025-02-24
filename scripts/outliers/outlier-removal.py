@@ -31,13 +31,20 @@ sys.path.append(str(Path(__file__).resolve().parents[2]))
 from resources import functions as func
 
 
-data_origin = r"C:\\Users\\Becky\\Documents\\UCAR_ImportantStuff\\Turkiye\\data\\"
+<<<<<<< HEAD
+data_origin = r"C:\\Users\\Becky\\Documents\\UCAR_ImportantStuff\\Turkiye\\scratchpad\\data\\"
 #data_origin = r"/Users/rzieber/Documents/3D-PAWS/Turkiye/reformatted/CSV_Format/analysis/"
-data_destination = r"C:\\Users\\Becky\\Documents\\UCAR_ImportantStuff\\Turkiye\\plots\\time_series\\pressure_per_site\\test\\"
+data_destination = r"C:\\Users\\Becky\\Documents\\UCAR_ImportantStuff\\Turkiye\\scratchpad\\plots\\"
 #data_destination = r"/Users/rzieber/Documents/3D-PAWS/Turkiye/plots/full_dataperiod/time_series/"
+=======
+#data_origin = r"C:\\Users\\Becky\\Documents\\UCAR_ImportantStuff\\Turkiye\\data\\"
+data_origin = r"/Users/rzieber/Documents/3D-PAWS/Turkiye/reformatted/CSV_Format/analysis/"
+#data_destination = r"C:\\Users\\Becky\\Documents\\UCAR_ImportantStuff\\Turkiye\\plots\\time_series\\pressure_per_site\\test\\"
+data_destination = r"/Users/rzieber/Documents/3D-PAWS/Turkiye/plots/full_dataperiod/time_series/"
+>>>>>>> 33e7b6d26804d839cedc761cd4d1f8fa1b324518
 
 outlier_reasons = [
-    "null", "timestamp reset", "threshold", "manual removal"
+    "null", "timestamp reset", "threshold", "manual removal", "htu_trend_switch"
 ]
 
 station_variables = [ 
@@ -52,10 +59,15 @@ variable_mapper = { # TSMS : 3DPAWS
     "avg_wind_speed":["wind_speed"], # both usng 1-minute average
     "total_rainfall":["tipping"]
 }
+# station_directories = [
+#     "station_TSMS00/", "station_TSMS01/", "station_TSMS02/",   
+#     "station_TSMS03/", "station_TSMS04/", "station_TSMS05/",
+#     "station_TSMS06/", "station_TSMS07/", "station_TSMS08/"
+# ]
 station_directories = [
-    "station_TSMS00/", "station_TSMS01/", "station_TSMS02/",   
-    "station_TSMS03/", "station_TSMS04/", "station_TSMS05/",
-    "station_TSMS06/", "station_TSMS07/", "station_TSMS08/"
+    "station_TSMS00\\"#, "station_TSMS01/", "station_TSMS02/",   
+    #"station_TSMS03/", "station_TSMS04/", "station_TSMS05/",
+    #"station_TSMS06/", "station_TSMS07/", "station_TSMS08/"
 ]
 
 station_files = [] # list of lists of filenames under each station directory [[TSMS00 files], [TSMS01 files], [TSMS02 files]...]
@@ -89,7 +101,7 @@ for i in range(len(station_directories)):
     =============================================================================================================================
     """
     for file in station_files[i]:
-        if file.startswith("TSMS"): # 3D-PAWS records start w/ 'TSMS##', TSMS ref. records start w/ the site name
+        if file.startswith("TSMS"): # 3D-PAWS records start w/ 'TSMS', TSMS ref. records start w/ the site name
             paws_df = pd.read_csv( 
                             data_origin+station_directories[i]+file,
                             header=0,
@@ -248,7 +260,6 @@ for i in range(len(station_directories)):
     df_sequential = paws_df_FILTERED[paws_df_FILTERED['time_diff'] > pd.Timedelta(0)]       
     paws_df_FILTERED = df_sequential.drop(columns=['time_diff'])
 
-
     """
     =============================================================================================================================
     Phase 3: Filter out unrealistic values
@@ -331,7 +342,6 @@ for i in range(len(station_directories)):
             })
             paws_outliers = pd.concat([paws_outliers, outliers_to_add], ignore_index=True)
 
-    if station_directories[i] == "station_TSMS06/": paws_df_FILTERED.to_csv(f"C:\\Users\\Becky\\Downloads\\tsms06_pre-removal.csv")
     """
     ============================================================================================================================
     Phase 4: Manual removal of known outliers.
@@ -363,6 +373,52 @@ for i in range(len(station_directories)):
             'outlier_type': outlier_reasons[3]
         })
         paws_outliers = pd.concat([paws_outliers, outliers_to_add], ignore_index=True)
+
+    # Very low values at the start of the study period -- [NEEDS FIXING]
+    if i in [6,7,8]:    # Adana
+        existing_nulls_pres = paws_df_FILTERED['bmp2_pres'].isnull()
+
+        exclude_pressure_start = pd.to_datetime("2022-11-11 09:00:00")
+        exclude_pressure_end = pd.to_datetime("2022-11-11 10:30:00")
+
+        to_remove_pres = paws_df_FILTERED.loc[
+            (paws_df_FILTERED['date'] >= exclude_pressure_start) & (paws_df_FILTERED['date'] <= exclude_pressure_end), 'bmp2_pres'
+        ].copy()
+
+        paws_df_FILTERED.loc[
+            (paws_df_FILTERED['date'] >= exclude_pressure_start) & (paws_df_FILTERED['date'] <= exclude_pressure_end), 'bmp2_pres'
+        ] = np.nan
+
+        new_nulls_pres = paws_df_FILTERED['bmp2_pres'].isnull() & ~existing_nulls_pres
+
+        outliers_to_add_pres = pd.DataFrame({                                
+            'date': paws_df_FILTERED.loc[new_nulls_pres, 'date'],
+            'column_name': 'bmp2_pres',
+            'original_value': to_remove,
+            'outlier_type': outlier_reasons[3]
+        })
+        paws_outliers = pd.concat([paws_outliers, outliers_to_add_pres], ignore_index=True)
+
+
+        existing_nulls_slp = paws_df_FILTERED['bmp2_slp'].isnull()
+
+        to_remove_slp = paws_df_FILTERED.loc[
+            (paws_df_FILTERED['date'] >= exclude_pressure_start) & (paws_df_FILTERED['date'] <= exclude_pressure_end), 'bmp2_slp'
+        ].copy()
+
+        paws_df_FILTERED.loc[
+            (paws_df_FILTERED['date'] >= exclude_pressure_start) & (paws_df_FILTERED['date'] <= exclude_pressure_end), 'bmp2_slp'
+        ] = np.nan
+
+        new_nulls_slp = paws_df_FILTERED['bmp2_slp'].isnull() & ~existing_nulls_slp
+
+        outliers_to_add_slp = pd.DataFrame({                                
+            'date': paws_df_FILTERED.loc[new_nulls_slp, 'date'],
+            'column_name': 'bmp2_slp',
+            'original_value': to_remove,
+            'outlier_type': outlier_reasons[3]
+        })
+        paws_outliers = pd.concat([paws_outliers, outliers_to_add_slp], ignore_index=True)
 
     # Erroneously high values -- possibly faulty connector, or manual manipulation of the gauge by the public
     if station_directories[i] == "station_TSMS08/":
@@ -405,25 +461,98 @@ for i in range(len(station_directories)):
         })
         paws_outliers = pd.concat([paws_outliers, outliers_to_add], ignore_index=True)
 
-    # """
-    # =============================================================================================================================
-    # Phase 5: Filter out HTU bit-switching. 3D-PAWS only.
-    # =============================================================================================================================
-    # """
-    # print(f"Phase 5: Filtering out HTU trend-switching.")
+    """
+    =============================================================================================================================
+    Phase 5: Filter out HTU bit-switching. 3D-PAWS only.
+    =============================================================================================================================
+    """
+    print(f"Phase 5: Filtering out HTU trend-switching.")
 
-    # paws_df_FILTERED.reset_index(drop=True, inplace=True)   # Reset the index to ensure it is a simple range
+    paws_df_FILTERED.reset_index(drop=True, inplace=True)   # Reset the index to ensure it is a simple range
 
-    # # isolate the known timeframes when HTU bit-switching is happening
-    # # create a list of verified starting & ending timestamps to iterate through
+    #existing_nulls = paws_df_FILTERED['htu_temp'].isnull()
 
-    # for variable in variable_mapper:                                
-    #     if variable in ["actual_pressure", "sea_level_pressure", "avg_wind_speed", "avg_wind_dir", "total_rainfall"]: continue
+    paws_df_FILTERED['htu_temp'] = pd.to_numeric(paws_df_FILTERED['htu_temp'], errors='coerce')
 
-    #     existing_nulls = paws_df_FILTERED[variable].isnull()   
+# -------------------------------------------------------------------------------------------------------------------------------
+    plt.figure(figsize=(20, 12))
 
-    #     tsms_df_FILTERED[variable] = pd.to_numeric(tsms_df_FILTERED[variable], errors='coerce')
+    plt.plot(paws_df_FILTERED['date'], paws_df_FILTERED['htu_temp'], marker='.', markersize=1, label=f"3D PAWS htu_temp")
 
+    plt.title(f'{station_directories[i][8:14]} Temperature: 3D PAWS htu_temp [BEFORE CLEANING]')
+    plt.xlabel('Date')
+    plt.ylabel('Temperature (˚C)')
+    plt.xticks(rotation=45)
+
+    plt.legend()
+
+    plt.grid(True)
+    plt.tight_layout()
+    plt.savefig(data_destination+station_directories[i]+"TSMS00_htu-temp_BEFORE.png")
+
+    plt.clf()
+    plt.close()
+# -------------------------------------------------------------------------------------------------------------------------------
+
+    #np.savetxt(data_destination+'htu_temp_array.txt', paws_df_FILTERED['htu_temp'])
+
+    outliers_to_add = []
+
+    j = 0
+    ground_truth = paws_df_FILTERED['htu_temp'].iloc[j]
+
+    if pd.isna(ground_truth):
+        while pd.isna(ground_truth):
+            j += 1
+            ground_truth = paws_df_FILTERED['htu_temp'].iloc[j]
+            print("Inside loop:", ground_truth)
+
+    print(ground_truth, "\tIndex number:", j) # MUST be initialized to a valid temperature reading
+
+    while j < len(paws_df_FILTERED)-1:
+        j += 1
+
+        neighbor = paws_df_FILTERED['htu_temp'].iloc[j]
+
+        if pd.isna(neighbor): continue 
+
+        if abs(ground_truth - neighbor) > 1.2:
+            # note the original value in neighbor in the outlier table
+            outliers_to_add.append({
+                'date':paws_df_FILTERED['date'].iloc[j],
+                'column_name':'htu_temp',
+                'original_value':neighbor,
+                'outlier_type':outlier_reasons[4]
+            })
+            # replace the original value in neighbor with np.nan
+            paws_df_FILTERED.loc[j, 'htu_temp'] = np.nan
+            # do not update ground truth, let neighbor increase with next loop
+        else: 
+            ground_truth = neighbor
+
+    #new_nulls = paws_df_FILTERED['htu_temp'].isnull() & ~existing_nulls
+
+    paws_outliers = pd.concat([paws_outliers, pd.Series(outliers_to_add)], ignore_index=True)
+
+# -------------------------------------------------------------------------------------------------------------------------------
+    plt.figure(figsize=(20, 12))
+
+    plt.plot(paws_df_FILTERED['date'], paws_df_FILTERED['htu_temp'], marker='.', markersize=1, label=f"3D PAWS htu_temp")
+
+    plt.title(f'{station_directories[i][8:14]} Temperature: 3D PAWS htu_temp [AFTER CLEANING]')
+    plt.xlabel('Date')
+    plt.ylabel('Temperature (˚C)')
+    plt.xticks(rotation=45)
+
+    plt.legend()
+
+    plt.grid(True)
+    plt.tight_layout()
+    plt.savefig(data_destination+station_directories[i]+"TSMS00_htu-temp_AFTER.png")
+
+    plt.clf()
+    plt.close()
+# -------------------------------------------------------------------------------------------------------------------------------
 
     # """
     # =============================================================================================================================
