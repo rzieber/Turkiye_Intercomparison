@@ -31,8 +31,10 @@ sys.path.append(str(Path(__file__).resolve().parents[2]))
 from resources import functions as func
 
 
-data_origin = r"C:\\Users\\Becky\\Documents\\Turkiye\\scratchpad\\data\\"
-data_destination = r"C:\\Users\\Becky\\Documents\\Turkiye\\scratchpad\\plots\\"
+data_origin = r"C:\\Users\\Becky\\Documents\\UCAR_ImportantStuff\\Turkiye\\data\\"
+#data_origin = r"/Users/rzieber/Documents/3D-PAWS/Turkiye/reformatted/CSV_Format/analysis/"
+data_destination = r"C:\\Users\\Becky\\Documents\\UCAR_ImportantStuff\\Turkiye\\scratchpad\\plots\\"
+#data_destination = r"/Users/rzieber/Documents/3D-PAWS/Turkiye/plots/full_dataperiod/time_series/"
 
 outlier_reasons = [
     "null", "timestamp reset", "threshold", "manual removal", "htu_trend_switch"
@@ -56,9 +58,9 @@ variable_mapper = { # TSMS : 3DPAWS
 #     "station_TSMS06/", "station_TSMS07/", "station_TSMS08/"
 # ]
 station_directories = [
-    "station_TSMS00\\"#, "station_TSMS01/", "station_TSMS02/",   
-    #"station_TSMS03/", "station_TSMS04/", "station_TSMS05/",
-    #"station_TSMS06/", "station_TSMS07/", "station_TSMS08/"
+    "station_TSMS00\\", "station_TSMS01/", "station_TSMS02/",   
+    "station_TSMS03/", "station_TSMS04/", "station_TSMS05/",
+    "station_TSMS06/", "station_TSMS07/", "station_TSMS08/"
 ]
 
 station_files = [] # list of lists of filenames under each station directory [[TSMS00 files], [TSMS01 files], [TSMS02 files]...]
@@ -458,89 +460,94 @@ for i in range(len(station_directories)):
     Phase 5: Filter out HTU bit-switching. 3D-PAWS only.
     =============================================================================================================================
     """
-    print(f"Phase 5: Filtering out HTU trend-switching.")
+#     print(f"Phase 5: Filtering out HTU trend-switching.")
 
-    paws_df_FILTERED.reset_index(drop=True, inplace=True)   # Reset the index to ensure it is a simple range
+#     paws_df_FILTERED.reset_index(drop=True, inplace=True)   # Reset the index to ensure it is a simple range
 
-    paws_df_FILTERED['htu_temp'] = pd.to_numeric(paws_df_FILTERED['htu_temp'], errors='coerce')
+#     #existing_nulls = paws_df_FILTERED['htu_temp'].isnull()
 
-# -------------------------------------------------------------------------------------------------------------------------------
-    plt.figure(figsize=(20, 12))
+#     paws_df_FILTERED['htu_temp'] = pd.to_numeric(paws_df_FILTERED['htu_temp'], errors='coerce')
 
-    plt.plot(paws_df_FILTERED['date'], paws_df_FILTERED['htu_temp'], marker='.', markersize=1, label=f"3D PAWS htu_temp")
 
-    plt.title(f'{station_directories[i][8:14]} Temperature: 3D PAWS htu_temp [BEFORE CLEANING]')
-    plt.xlabel('Date')
-    plt.ylabel('Temperature (˚C)')
-    plt.xticks(rotation=45)
+# # -------------------------------------------------------------------------------------------------------------------------------
+#     plt.figure(figsize=(20, 12))
 
-    plt.legend()
+#     plt.plot(paws_df_FILTERED['date'], paws_df_FILTERED['htu_temp'], marker='.', markersize=1, label=f"3D PAWS htu_temp")
 
-    plt.grid(True)
-    plt.tight_layout()
-    plt.savefig(data_destination+station_directories[i]+"TSMS00_htu-temp_BEFORE.png")
+#     plt.title(f'{station_directories[i][8:14]} Temperature: 3D PAWS htu_temp [BEFORE CLEANING]')
+#     plt.xlabel('Date')
+#     plt.ylabel('Temperature (˚C)')
+#     plt.xticks(rotation=45)
 
-    plt.clf()
-    plt.close()
-# -------------------------------------------------------------------------------------------------------------------------------
+#     plt.legend()
 
-    #np.savetxt(data_destination+'htu_temp_array.txt', paws_df_FILTERED['htu_temp'])
+#     plt.grid(True)
+#     plt.tight_layout()
+#     plt.savefig(data_destination+station_directories[i]+"\\temperature\\TSMS00_htu-temp_BEFORE.png")
 
-    outliers_to_add = []
+#     plt.clf()
+#     plt.close()
+# # -------------------------------------------------------------------------------------------------------------------------------
 
-    j = 0
-    ground_truth = paws_df_FILTERED['htu_temp'].iloc[j]
+#     #np.savetxt(data_destination+'htu_temp_array.txt', paws_df_FILTERED['htu_temp'])
 
-    if pd.isna(ground_truth):
-        while pd.isna(ground_truth):
-            j += 1
-            ground_truth = paws_df_FILTERED['htu_temp'].iloc[j]
-            print("Inside loop:", ground_truth)
+#     outliers_to_add = []
 
-    print(ground_truth, "\tIndex number:", j) # MUST be initialized to a valid temperature reading
+#     j = 0
+#     ground_truth = paws_df_FILTERED['htu_temp'].iloc[j]
 
-    while j < len(paws_df_FILTERED)-1:
-        j += 1
+#     if pd.isna(ground_truth):
+#         while pd.isna(ground_truth):
+#             j += 1
+#             ground_truth = paws_df_FILTERED['htu_temp'].iloc[j]
+#             print("Inside loop:", ground_truth)
 
-        neighbor = paws_df_FILTERED['htu_temp'].iloc[j]
+#     print(ground_truth, "\tIndex number:", j) # MUST be initialized to a valid temperature reading
 
-        if pd.isna(neighbor): continue 
+#     while j < len(paws_df_FILTERED)-1:
+#         j += 1
 
-        if abs(ground_truth - neighbor) > 1.2:
-            # note the original value in neighbor in the outlier table
-            outliers_to_add.append({
-                'date':paws_df_FILTERED['date'].iloc[j],
-                'column_name':'htu_temp',
-                'original_value':neighbor,
-                'outlier_type':outlier_reasons[4]
-            })
-            # replace the original value in neighbor with nan
-            paws_df_FILTERED.loc[j, 'htu_temp'] = np.nan
-            # do not update ground truth, let neighbor increase with next loop
-        else: 
-            ground_truth = neighbor
+#         neighbor = paws_df_FILTERED['htu_temp'].iloc[j]
 
-    paws_outliers = pd.concat([paws_outliers, pd.Series(outliers_to_add)], ignore_index=True)
+#         if pd.isna(neighbor): continue 
 
-# -------------------------------------------------------------------------------------------------------------------------------
-    plt.figure(figsize=(20, 12))
+#         if abs(ground_truth - neighbor) > 1.2:
+#             # note the original value in neighbor in the outlier table
+#             outliers_to_add.append({
+#                 'date':paws_df_FILTERED['date'].iloc[j],
+#                 'column_name':'htu_temp',
+#                 'original_value':neighbor,
+#                 'outlier_type':outlier_reasons[4]
+#             })
+#             # replace the original value in neighbor with np.nan
+#             paws_df_FILTERED.loc[j, 'htu_temp'] = np.nan
+#             # do not update ground truth, let neighbor increase with next loop
+#         else: 
+#             ground_truth = neighbor
 
-    plt.plot(paws_df_FILTERED['date'], paws_df_FILTERED['htu_temp'], marker='.', markersize=1, label=f"3D PAWS htu_temp")
+#     #new_nulls = paws_df_FILTERED['htu_temp'].isnull() & ~existing_nulls
 
-    plt.title(f'{station_directories[i][8:14]} Temperature: 3D PAWS htu_temp [AFTER CLEANING]')
-    plt.xlabel('Date')
-    plt.ylabel('Temperature (˚C)')
-    plt.xticks(rotation=45)
+#     paws_outliers = pd.concat([paws_outliers, pd.Series(outliers_to_add)], ignore_index=True)
 
-    plt.legend()
+# # -------------------------------------------------------------------------------------------------------------------------------
+#     plt.figure(figsize=(20, 12))
 
-    plt.grid(True)
-    plt.tight_layout()
-    plt.savefig(data_destination+station_directories[i]+"TSMS00_htu-temp_AFTER.png")
+#     plt.plot(paws_df_FILTERED['date'], paws_df_FILTERED['htu_temp'], marker='.', markersize=1, label=f"3D PAWS htu_temp")
 
-    plt.clf()
-    plt.close()
-# -------------------------------------------------------------------------------------------------------------------------------
+#     plt.title(f'{station_directories[i][8:14]} Temperature: 3D PAWS htu_temp [AFTER CLEANING]')
+#     plt.xlabel('Date')
+#     plt.ylabel('Temperature (˚C)')
+#     plt.xticks(rotation=45)
+
+#     plt.legend()
+
+#     plt.grid(True)
+#     plt.tight_layout()
+#     plt.savefig(data_destination+station_directories[i]+"\\temperature\\TSMS00_htu-temp_AFTER.png")
+
+#     plt.clf()
+#     plt.close()
+# # -------------------------------------------------------------------------------------------------------------------------------
 
     # """
     # =============================================================================================================================
@@ -1197,7 +1204,71 @@ for i in range(len(station_directories)):
 
 """
 =============================================================================================================================
-Create a time series plot of each individual 3D PAWS station data versus the TSMS reference station. COMPLETE RECORDS
+Create time series plots of the 3 temperature sensors compared to TSMS for each sensor at each site. MONTHLY RECORDS
+=============================================================================================================================
+"""
+print("Temperature comparison (this will take some time)")
+sites = {
+    0:"Ankara", 1:"Konya", 2:"Adana"
+}
+station_map = {
+    0:[0,1,2], 1:[3,4,5], 2:[6,7,8]
+}
+
+for i in range(3):
+    print(f"\t{sites[i]}: Temperature Comparison per Sensor")
+
+    inst_1 = paws_dfs[station_map[i][0]].copy(deep=True)
+    inst_2 = paws_dfs[station_map[i][1]].copy(deep=True)
+    inst_3 = paws_dfs[station_map[i][2]].copy(deep=True)
+    tsms_ref = tsms_dfs[i*3].copy(deep=True)
+
+    inst_1.reset_index(inplace=True)
+    inst_2.reset_index(inplace=True)
+    inst_3.reset_index(inplace=True)
+    tsms_ref.reset_index(inplace=True)
+
+    for year_month in set(inst_1['year_month']) & \
+                        set(inst_2['year_month']) & \
+                            set(inst_3['year_month']) & \
+                                set(tsms_ref['year_month']):
+        inst_1_grouped = inst_1[inst_1['year_month'] == year_month]
+        inst_2_grouped = inst_2[inst_2['year_month'] == year_month]
+        inst_3_grouped = inst_3[inst_3['year_month'] == year_month]
+        tsms_grouped = tsms_ref[tsms_ref['year_month'] == year_month]
+
+        merged_df = pd.merge(inst_1_grouped, inst_2_grouped, on='date', suffixes=('_1', '_2'))
+        merged_df = pd.merge(merged_df, inst_3_grouped, on='date', suffixes=('', '_3'))
+        merged_df = pd.merge(merged_df, tsms_grouped, on='date', suffixes=('', '_tsms'))
+
+        for sensor in variable_mapper['temperature']:
+            plt.figure(figsize=(20, 12))
+
+            plt.plot(merged_df['date'], merged_df[f'{sensor}_1'], marker='.', markersize=1, label=f"TSMS0{station_map[i][0]} {sensor}")
+            plt.plot(merged_df['date'], merged_df[f'{sensor}_2'], marker='.', markersize=1, label=f"TSMS0{station_map[i][1]} {sensor}")
+            plt.plot(merged_df['date'], merged_df[f'{sensor}'], marker='.', markersize=1, label=f"TSMS0{station_map[i][2]} {sensor}")
+            plt.plot(merged_df['date'], merged_df[f'temperature'], marker='.', markersize=1, label=f'{sites[i]} TSMS Reference')
+
+            plt.title(f'{sites[i]} {year_month}: {sensor} Temperature Comparison')
+            plt.xlabel('Date')
+            plt.ylabel('Temperature (˚C)')
+            plt.xticks(rotation=45)
+
+            plt.legend()
+
+            plt.grid(True)
+            plt.tight_layout()
+
+            #plt.savefig(data_destination+station_directories[i]+f"total_rainfall/raw/{station_directories[i][8:14]}_rainfall_accumulation_TEST.png")
+            plt.savefig(data_destination+sites[i]+f"\\{sites[i]}_{sensor}_{year_month}_temperature_comparison.png")
+
+            plt.clf()
+            plt.close()
+
+
+"""
+=============================================================================================================================
+Create a rainfall accumulation time series plot of each individual 3D PAWS station data versus the TSMS reference station. COMPLETE RECORDS
 =============================================================================================================================
 """
 # sites = {
