@@ -48,11 +48,11 @@ variable_mapper = { # TSMS : 3DPAWS
     "humidity":["bme2_hum", "htu_hum"],
     "actual_pressure":["bmp2_pres"],
     "sea_level_pressure":["bmp2_slp"],
-    "avg_wind_dir":["wind_dir"], # both using 1-minute average
-    "avg_wind_speed":["wind_speed"], # both usng 1-minute average
+    "avg_wind_dir":["wind_dir"],
+    "avg_wind_speed":["wind_speed"], 
     "total_rainfall":["tipping"]
 }
-# station_directories = [
+# station_directories = [ # i really oughta do pathlib for os agnostic code, this is silly
 #     "station_TSMS00/", "station_TSMS01/", "station_TSMS02/",   
 #     "station_TSMS03/", "station_TSMS04/", "station_TSMS05/",
 #     "station_TSMS06/", "station_TSMS07/", "station_TSMS08/"
@@ -156,7 +156,7 @@ for i in range(len(station_directories)):
     =============================================================================================================================
     =============================================================================================================================
     """
-
+    
     paws_outliers = pd.DataFrame(columns=['date', 'column_name', 'original_value', 'outlier_type'])
     tsms_outliers = pd.DataFrame(columns=['date', 'column_name', 'original_value', 'outlier_type'])
     
@@ -171,6 +171,7 @@ for i in range(len(station_directories)):
 
     print()
     print("Starting outlier removal for ", station_directories[i][8:14])
+    
     """
     =============================================================================================================================
     Phase 1: Filter out nulls (-999.99)
@@ -466,6 +467,7 @@ for i in range(len(station_directories)):
 #     #existing_nulls = paws_df_FILTERED['htu_temp'].isnull()
 
 #     paws_df_FILTERED['htu_temp'] = pd.to_numeric(paws_df_FILTERED['htu_temp'], errors='coerce')
+
 
 # # -------------------------------------------------------------------------------------------------------------------------------
 #     plt.figure(figsize=(20, 12))
