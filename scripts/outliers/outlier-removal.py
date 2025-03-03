@@ -1200,12 +1200,76 @@ for i in range(len(station_directories)):
     #     plt.close()
 
 
+# """
+# =============================================================================================================================
+# Create time series plots of the 3 temperature sensors compared to TSMS for each sensor at each site. MONTHLY RECORDS
+# =============================================================================================================================
+# """
+# print("Temperature comparison (this will take some time)")
+# sites = {
+#     0:"Ankara", 1:"Konya", 2:"Adana"
+# }
+# station_map = {
+#     0:[0,1,2], 1:[3,4,5], 2:[6,7,8]
+# }
+
+# for i in range(3):
+#     print(f"\t{sites[i]}: Temperature Comparison per Sensor")
+
+#     inst_1 = paws_dfs[station_map[i][0]].copy(deep=True)
+#     inst_2 = paws_dfs[station_map[i][1]].copy(deep=True)
+#     inst_3 = paws_dfs[station_map[i][2]].copy(deep=True)
+#     tsms_ref = tsms_dfs[i*3].copy(deep=True)
+
+#     inst_1.reset_index(inplace=True)
+#     inst_2.reset_index(inplace=True)
+#     inst_3.reset_index(inplace=True)
+#     tsms_ref.reset_index(inplace=True)
+
+#     for year_month in set(inst_1['year_month']) & \
+#                         set(inst_2['year_month']) & \
+#                             set(inst_3['year_month']) & \
+#                                 set(tsms_ref['year_month']):
+#         inst_1_grouped = inst_1[inst_1['year_month'] == year_month]
+#         inst_2_grouped = inst_2[inst_2['year_month'] == year_month]
+#         inst_3_grouped = inst_3[inst_3['year_month'] == year_month]
+#         tsms_grouped = tsms_ref[tsms_ref['year_month'] == year_month]
+
+#         merged_df = pd.merge(inst_1_grouped, inst_2_grouped, on='date', suffixes=('_1', '_2'))
+#         merged_df = pd.merge(merged_df, inst_3_grouped, on='date', suffixes=('', '_3'))
+#         merged_df = pd.merge(merged_df, tsms_grouped, on='date', suffixes=('', '_tsms'))
+
+#         for sensor in variable_mapper['temperature']:
+#             plt.figure(figsize=(20, 12))
+
+#             plt.plot(merged_df['date'], merged_df[f'{sensor}_1'], marker='.', markersize=1, label=f"TSMS0{station_map[i][0]} {sensor}")
+#             plt.plot(merged_df['date'], merged_df[f'{sensor}_2'], marker='.', markersize=1, label=f"TSMS0{station_map[i][1]} {sensor}")
+#             plt.plot(merged_df['date'], merged_df[f'{sensor}'], marker='.', markersize=1, label=f"TSMS0{station_map[i][2]} {sensor}")
+#             plt.plot(merged_df['date'], merged_df[f'temperature'], marker='.', markersize=1, label=f'{sites[i]} TSMS Reference')
+
+#             plt.title(f'{sites[i]} {year_month}: {sensor} Temperature Comparison')
+#             plt.xlabel('Date')
+#             plt.ylabel('Temperature (˚C)')
+#             plt.xticks(rotation=45)
+
+#             plt.legend()
+
+#             plt.grid(True)
+#             plt.tight_layout()
+
+#             #plt.savefig(data_destination+station_directories[i]+f"total_rainfall/raw/{station_directories[i][8:14]}_rainfall_accumulation_TEST.png")
+#             plt.savefig(data_destination+sites[i]+f"\\{sites[i]}_{sensor}_{year_month}_temperature_comparison.png")
+
+#             plt.clf()
+#             plt.close()
+
+
 """
 =============================================================================================================================
-Create time series plots of the 3 temperature sensors compared to TSMS for each sensor at each site. MONTHLY RECORDS
+Create time series plots of the 3 humidity sensors compared to TSMS for each sensor at each site. MONTHLY RECORDS
 =============================================================================================================================
 """
-print("Temperature comparison (this will take some time)")
+print("Humidity comparison (this will take some time)")
 sites = {
     0:"Ankara", 1:"Konya", 2:"Adana"
 }
@@ -1214,7 +1278,7 @@ station_map = {
 }
 
 for i in range(3):
-    print(f"\t{sites[i]}: Temperature Comparison per Sensor")
+    print(f"\t{sites[i]}: Humidity Comparison per Sensor")
 
     inst_1 = paws_dfs[station_map[i][0]].copy(deep=True)
     inst_2 = paws_dfs[station_map[i][1]].copy(deep=True)
@@ -1239,17 +1303,17 @@ for i in range(3):
         merged_df = pd.merge(merged_df, inst_3_grouped, on='date', suffixes=('', '_3'))
         merged_df = pd.merge(merged_df, tsms_grouped, on='date', suffixes=('', '_tsms'))
 
-        for sensor in variable_mapper['temperature']:
+        for sensor in variable_mapper['humidity']:
             plt.figure(figsize=(20, 12))
 
             plt.plot(merged_df['date'], merged_df[f'{sensor}_1'], marker='.', markersize=1, label=f"TSMS0{station_map[i][0]} {sensor}")
             plt.plot(merged_df['date'], merged_df[f'{sensor}_2'], marker='.', markersize=1, label=f"TSMS0{station_map[i][1]} {sensor}")
             plt.plot(merged_df['date'], merged_df[f'{sensor}'], marker='.', markersize=1, label=f"TSMS0{station_map[i][2]} {sensor}")
-            plt.plot(merged_df['date'], merged_df[f'temperature'], marker='.', markersize=1, label=f'{sites[i]} TSMS Reference')
+            plt.plot(merged_df['date'], merged_df[f'humidity'], marker='.', markersize=1, label=f'{sites[i]} TSMS Reference')
 
-            plt.title(f'{sites[i]} {year_month}: {sensor} Temperature Comparison')
+            plt.title(f'{sites[i]} {year_month}: {sensor} Relative Humidity Comparison')
             plt.xlabel('Date')
-            plt.ylabel('Temperature (˚C)')
+            plt.ylabel('Relative Humidity (%)')
             plt.xticks(rotation=45)
 
             plt.legend()
@@ -1258,7 +1322,7 @@ for i in range(3):
             plt.tight_layout()
 
             #plt.savefig(data_destination+station_directories[i]+f"total_rainfall/raw/{station_directories[i][8:14]}_rainfall_accumulation_TEST.png")
-            plt.savefig(data_destination+sites[i]+f"\\{sites[i]}_{sensor}_{year_month}_temperature_comparison.png")
+            plt.savefig(data_destination+sites[i]+f"\\humidity\\{sites[i]}_{sensor}_{year_month}_temperature_comparison.png")
 
             plt.clf()
             plt.close()
