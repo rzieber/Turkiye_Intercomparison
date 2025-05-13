@@ -108,13 +108,13 @@ for i in range(len(station_directories)):
             
             paws_df.drop( # no reference data for these col's OR no data exists in these columns (e.g. sth) OR scalar (e.g. alt)
                         ['int', 'sth_temp', 'sth_hum', 'bmp2_alt', 'vis_light', 'ir_light', 'uv_light',
-                         'year', 'month', 'day', 'hour', 'minute'], 
+                            'year', 'month', 'day', 'hour', 'minute'], 
                         axis=1, 
                         inplace=True
                     )
             
             paws_df = paws_df[['date', 'bmp2_temp', 'htu_temp', 'mcp9808', 'bme2_hum', 'htu_hum', 'bmp2_pres',
-                               'bmp2_slp', 'wind_dir', 'wind_speed', "tipping"]]
+                                'bmp2_slp', 'wind_dir', 'wind_speed', "tipping"]]
             
             paws_df['year_month'] = paws_df['date'].dt.to_period('M')
             paws_df['year_month_day'] = paws_df['date'].dt.to_period('D')
@@ -137,7 +137,7 @@ for i in range(len(station_directories)):
             tsms_df.drop(['year', 'month', 'day', 'hour', 'minute'], axis=1, inplace=True)
 
             tsms_df = tsms_df[['date', 'temp', 'humidity', 'actual_pressure', 'sea_level_pressure', 
-                               'avg_wind_dir', 'avg_wind_speed', 'total_rainfall']]
+                                'avg_wind_dir', 'avg_wind_speed', 'total_rainfall']]
             
             tsms_df['year_month'] = tsms_df['date'].dt.to_period('M')
             tsms_df['year_month_day'] = tsms_df['date'].dt.to_period('D')
@@ -557,7 +557,7 @@ for i in range(len(station_directories)):
     # plt.savefig(data_destination+station_directories[i]+f"wind/raw/{station_directories[i][8:14]}_windrose.png")
     # plt.clf()
     # plt.close()
-       
+
 
     """
     =============================================================================================================================
