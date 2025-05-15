@@ -12,7 +12,7 @@ Phase 1: Nulls (-999.99)
 Phase 2: Timestamp resets (out of order timestamps)
 Phase 3: Thresholds (unrealistic values)
 Phase 4: Manual removal of identified special cases
-Phase 5: Statistical outlier removal (z-score and mean absolute deviation)
+Phase 5: Statistical outlier removal (rolling z-score and Hampel filter)
 
 How to use this script:
     The outlier removal logic in the first portion of this script is to remain uncommented.

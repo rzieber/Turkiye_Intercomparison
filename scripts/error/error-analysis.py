@@ -1,11 +1,12 @@
 import numpy as np
 import pandas as pd
 from pathlib import Path
+from functools import reduce
 from scipy.stats import pearsonr
 from sklearn.metrics import mean_absolute_error, root_mean_squared_error
 
-output = Path(...)
-data = Path(...)
+output = Path(r"C:\\Users\\Becky\\Documents\\UCAR_ImportantStuff\\Turkiye\\data\\stats\\")
+data = Path(r"C:\\Users\\Becky\\Documents\\UCAR_ImportantStuff\\Turkiye\\data\\final\\csvs\\")
 csvs = data.glob("*.csv")
 
 
@@ -47,8 +48,8 @@ Accuracy (systematic errors) -------------------------
     Bias, Mean Absolute Error, Root Mean Squared Error
 =============================================================================================================================    
 """
-stats = []  # [TSMS00[TSMS00, var, bias, mae, rmse], TSMS01[TSMS01, var, bias, mae, rmse], ...]
-stats.append(['Station', 'Variable', 'Bias', 'Mean Absolute Error', 'Root Mean Squared Error'])
+accuracy = []  # [TSMS00[TSMS00, var, bias, mae, rmse], TSMS01[TSMS01, var, bias, mae, rmse], ...]
+accuracy.append(['Station', 'Variable', 'Bias', 'Mean Absolute Error', 'Root Mean Squared Error'])
 
 for i in range(3):
     print(sites[i])
@@ -98,11 +99,10 @@ for i in range(3):
                     s.append(round(mean_absolute_error(tsms, paws), 2))        
                     s.append(round(root_mean_squared_error(tsms, paws),2))     
 
-                stats.append(s)
+                accuracy.append(s)
 
-df_stats = pd.DataFrame(stats[1:], columns=stats[0])
-df_stats.to_csv(output / "accuracy.csv", index=False)
-
+df_accuracy = pd.DataFrame(accuracy[1:], columns=accuracy[0])
+#df_accuracy.to_csv(output / "accuracy.csv", index=False)
 
 """
 =============================================================================================================================
@@ -110,8 +110,8 @@ Precision (random errors) ----------------------
     Standard Deviations, Correlation Coefficients
 =============================================================================================================================    
 """
-stats = []  # [TSMS00[TSMS00, var, std_paws, std_tsms, r], TSMS01[TSMS01, var, std, r], ...]
-stats.append(['Station', 'Variable', '3D-PAWS Standard Deviation', 'TSMS Standard Deviation', 'Pearson Correlation Coefficient'])
+precision = []  # [TSMS00[TSMS00, var, std_paws, std_tsms, r], TSMS01[TSMS01, var, std, r], ...]
+precision.append(['Station', 'Variable', '3D-PAWS Standard Deviation', 'TSMS Standard Deviation', 'Pearson Correlation Coefficient'])
 
 for i in range(3):
     print(sites[i])
@@ -158,19 +158,18 @@ for i in range(3):
                     round(tsms_std, 2),
                     round(corr_coef, 2)
                 ]
-                stats.append(s)
+                precision.append(s)
 
-df_stats = pd.DataFrame(stats[1:], columns=stats[0])
-df_stats.to_csv(output / "precision.csv", index=False)
-
+df_precision = pd.DataFrame(precision[1:], columns=precision[0])
+#df_precision.to_csv(output / "precision.csv", index=False)
 
 """
 =============================================================================================================================
 Reliability
 =============================================================================================================================    
 """
-stats = []  # [TSMS00[TSMS00, var, reliability, inaccuracy], TSMS01[TSMS01, var, reliability, inaccuracy], ...]
-stats.append(['Station', 'Variable', 'Reliability', 'Inaccuracy'])
+reliable = []  # [TSMS00[TSMS00, var, reliability, inaccuracy], TSMS01[TSMS01, var, reliability, inaccuracy], ...]
+reliable.append(['Station', 'Variable', 'Reliability', 'Inaccuracy'])
 
 for i in range(3):
     print(sites[i])
@@ -215,7 +214,29 @@ for i in range(3):
                     round(reliability, 2),
                     round(inaccuracy, 2)
                 ]
-                stats.append(s)
+                reliable.append(s)
 
-df_stats = pd.DataFrame(stats[1:], columns=stats[0])
-df_stats.to_csv(output / "reliability.csv", index=False)
+df_reliable = pd.DataFrame(reliable[1:], columns=reliable[0])
+#df_reliable.to_csv(output / "reliability.csv", index=False)
+
+
+"""
+=============================================================================================================================
+Create comprehensive csv
+=============================================================================================================================    
+"""
+key_cols = ['Station', 'Variable']
+
+# For each DataFrame, select only key columns + non-key columns (excluding duplicates)
+def select_merge_cols(df):
+    return df[key_cols + [col for col in df.columns if col not in key_cols]]
+
+dfs = [df_accuracy, df_precision, df_reliable]
+dfs_selected = [select_merge_cols(df) for df in dfs]
+
+df_merged = reduce(
+    lambda left, right: pd.merge(left, right, on=key_cols, how='outer'),
+    dfs_selected
+)
+
+df_merged.to_csv(output / 'all.csv', index=False)
