@@ -42,10 +42,10 @@ sys.path.append(str(Path(__file__).resolve().parents[2]))
 from resources import functions as func
 
 
-data_origin = r"C:\\Users\\Becky\\Documents\\UCAR_ImportantStuff\\Turkiye\\data\\"
-#data_origin = r"/Users/rzieber/Documents/3D-PAWS/Turkiye/reformatted/CSV_Format/analysis/"
-data_destination = r"C:\\Users\\Becky\\Documents\\UCAR_ImportantStuff\\Turkiye\\plots\\scatter_plots\\"
-#data_destination = r"/Users/rzieber/Documents/3D-PAWS/Turkiye/plots/full_dataperiod/time_series/"
+data_origin = ...
+#data_origin = ...
+data_destination = ...
+#data_destination = ...
 
 outlier_reasons = [
     "null", "timestamp_reset", "threshold", "manual_removal", "htu_trend_switch", "z-score_contextual",
@@ -703,15 +703,17 @@ for i in range(len(station_directories)):
     CREATE FINAL CSV'S
     =========================================================================================================
     """
-    # if i in [0,1,2]: tsms_outliers.to_csv(data_destination+f"TSMS-Reference_Ankara_outliers.csv")
-    # elif i in [3,4,5]: tsms_outliers.to_csv(data_destination+f"TSMS-Reference_Konya_outliers.csv")
-    # elif i in [6,7,8]: tsms_outliers.to_csv(data_destination+f"TSMS-Reference_Adana_outliers.csv")
-    # paws_outliers.to_csv(data_destination+f"3DPAWS_{station_directories[i][8:14]}_outliers.csv")
+    paws_df_FILTERED.drop(columns=['bme2_hum','year_month', 'year_month_day', 'year_month_day_hour'], inplace=True)
 
-    # if i in [0,1,2]: tsms_df_FILTERED.to_csv(data_destination+f"TSMS-Reference_Ankara_final.csv")
-    # elif i in [3,4,5]: tsms_df_FILTERED.to_csv(data_destination+f"TSMS-Reference_Konya_final.csv")
-    # elif i in [6,7,8]: tsms_df_FILTERED.to_csv(data_destination+f"TSMS-Reference_Adana_final.csv")
-    # paws_df_FILTERED.to_csv(data_destination+f"3DPAWS_{station_directories[i][8:14]}_final.csv")
+    if i in [0,1,2]: tsms_outliers.to_csv(data_destination+f"TSMS-Reference_Ankara_outliers.csv", index=False)
+    elif i in [3,4,5]: tsms_outliers.to_csv(data_destination+f"TSMS-Reference_Konya_outliers.csv", index=False)
+    elif i in [6,7,8]: tsms_outliers.to_csv(data_destination+f"TSMS-Reference_Adana_outliers.csv", index=False)
+    paws_outliers.to_csv(data_destination+f"3DPAWS_{station_directories[i][8:14]}_outliers.csv", index=False)
+
+    if i in [0,1,2]: tsms_df_FILTERED.to_csv(data_destination+f"TSMS-Reference_Ankara_final.csv", index=False)
+    elif i in [3,4,5]: tsms_df_FILTERED.to_csv(data_destination+f"TSMS-Reference_Konya_final.csv", index=False)
+    elif i in [6,7,8]: tsms_df_FILTERED.to_csv(data_destination+f"TSMS-Reference_Adana_final.csv", index=False)
+    paws_df_FILTERED.to_csv(data_destination+f"3DPAWS_{station_directories[i][8:14]}_final.csv", index=False)
 
     print("\n----------------------")
 

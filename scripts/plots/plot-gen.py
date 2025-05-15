@@ -26,24 +26,9 @@ import seaborn as sns
 project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.append(project_root)
 
-data_origin = r"/Users/rzieber/Documents/3D-PAWS/Turkiye/output/"
+data_origin = ...
+data_destination = ...
 
-#data_destination = r"/Users/rzieber/Documents/3D-PAWS/Turkiye/plots/time_series/complete_records/"
-#data_destination = r"/Users/rzieber/Documents/3D-PAWS/Turkiye/plots/time_series/monthly_plots/"
-#data_destination = r"/Users/rzieber/Documents/3D-PAWS/Turkiye/plots/time_series/temp_comparison/3DPAWS_and_TSMS/monthly_plots_2/"
-#data_destination = r"/Users/rzieber/Documents/3D-PAWS/Turkiye/plots/time_series/temp_comparison/3DPAWS_Only/monthly_plots/"
-data_destination = r"/Users/rzieber/Documents/3D-PAWS/Turkiye/plots/wind/complete_records_6knots/"
-#data_destination = r"/Users/rzieber/Documents/3D-PAWS/Turkiye/plots/wind/monthly_plots/"
-#data_destination = r"/Users/rzieber/Documents/3D-PAWS/Turkiye/plots/scatter_plots/3DPAWS_vs_TSMS/complete_records/"
-#data_destination = r"/Users/rzieber/Documents/3D-PAWS/Turkiye/plots/scatter_plots/3DPAWS_vs_TSMS/monthly_plots/"
-#data_destination = r"/Users/rzieber/Documents/3D-PAWS/Turkiye/plots/scatter_plots/3DPAWS_vs_3DPAWS/"
-#data_destination = r"/Users/rzieber/Documents/3D-PAWS/Turkiye/plots/bar_chart_3/complete_records/"
-#data_destination = r"/Users/rzieber/Documents/3D-PAWS/Turkiye/plots/bar_chart_3/monthly_records/"
-#data_destination = r"/Users/rzieber/Documents/3D-PAWS/Turkiye/plots/June3_2023_zoomin/"
-#data_destination = r"/Users/rzieber/Documents/3D-PAWS/Turkiye/plots/data_gap_finder/"
-#data_destination = r"/Users/rzieber/Documents/3D-PAWS/Turkiye/plots/wind_rose_analysis/csvs/"
-#data_destination = r"/Users/rzieber/Documents/3D-PAWS/Turkiye/plots/box_plots/complete_records/"
-#data_destination = r"/Users/rzieber/Documents/3D-PAWS/Turkiye/plots/difference_plots/complete_records/"
 
 station_variables = [ 
     "temp", "humidity", "actual_pressure", "sea_level_pressure", "wind", "total_rainfall"
