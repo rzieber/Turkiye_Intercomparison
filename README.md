@@ -11,8 +11,8 @@ Plots used to visually explore this dataset can be found in  'scripts/plots/'.
 ### Outliers
 Outlier analysis products and procedures can be found in  'scripts/outliers/'.
 
-### Dev
-Programming utilities can be found in  'resources/'.
+### Statistics
+Error analysis calculations can be found in  'scripts/error/'.
 
 # Install
 ### Dependencies
