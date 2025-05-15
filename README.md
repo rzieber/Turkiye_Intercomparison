@@ -21,5 +21,5 @@ Error analysis calculations can be found in  'scripts/error/'.
 # Install
 ### Dependencies
 ```bash
-pip install pandas numpy 
+pip install pandas numpy scipy 
 ```
