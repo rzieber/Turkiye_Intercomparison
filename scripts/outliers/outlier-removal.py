@@ -42,10 +42,8 @@ sys.path.append(str(Path(__file__).resolve().parents[2]))
 from resources import functions as func
 
 
-data_origin = ...
-#data_origin = ...
-data_destination = ...
-#data_destination = ...
+data_origin = r"C:\\Users\\Becky\\Documents\\UCAR_ImportantStuff\\Turkiye\\data\\archive\\reformatted\\"
+data_destination = r"C:\\Users\\Becky\\Documents\\UCAR_ImportantStuff\\Turkiye\\plots\\time_series\\difference_plots_05-15-25\\"
 
 outlier_reasons = [
     "null", "timestamp_reset", "threshold", "manual_removal", "htu_trend_switch", "z-score_contextual",
@@ -703,17 +701,17 @@ for i in range(len(station_directories)):
     CREATE FINAL CSV'S
     =========================================================================================================
     """
-    paws_df_FILTERED.drop(columns=['bme2_hum','year_month', 'year_month_day', 'year_month_day_hour'], inplace=True)
+    # paws_df_FILTERED.drop(columns=['bme2_hum','year_month', 'year_month_day', 'year_month_day_hour'], inplace=True)
 
-    if i in [0,1,2]: tsms_outliers.to_csv(data_destination+f"TSMS-Reference_Ankara_outliers.csv", index=False)
-    elif i in [3,4,5]: tsms_outliers.to_csv(data_destination+f"TSMS-Reference_Konya_outliers.csv", index=False)
-    elif i in [6,7,8]: tsms_outliers.to_csv(data_destination+f"TSMS-Reference_Adana_outliers.csv", index=False)
-    paws_outliers.to_csv(data_destination+f"3DPAWS_{station_directories[i][8:14]}_outliers.csv", index=False)
+    # if i in [0,1,2]: tsms_outliers.to_csv(data_destination+f"TSMS-Reference_Ankara_outliers.csv", index=False)
+    # elif i in [3,4,5]: tsms_outliers.to_csv(data_destination+f"TSMS-Reference_Konya_outliers.csv", index=False)
+    # elif i in [6,7,8]: tsms_outliers.to_csv(data_destination+f"TSMS-Reference_Adana_outliers.csv", index=False)
+    # paws_outliers.to_csv(data_destination+f"3DPAWS_{station_directories[i][8:14]}_outliers.csv", index=False)
 
-    if i in [0,1,2]: tsms_df_FILTERED.to_csv(data_destination+f"TSMS-Reference_Ankara_final.csv", index=False)
-    elif i in [3,4,5]: tsms_df_FILTERED.to_csv(data_destination+f"TSMS-Reference_Konya_final.csv", index=False)
-    elif i in [6,7,8]: tsms_df_FILTERED.to_csv(data_destination+f"TSMS-Reference_Adana_final.csv", index=False)
-    paws_df_FILTERED.to_csv(data_destination+f"3DPAWS_{station_directories[i][8:14]}_final.csv", index=False)
+    # if i in [0,1,2]: tsms_df_FILTERED.to_csv(data_destination+f"TSMS-Reference_Ankara_final.csv", index=False)
+    # elif i in [3,4,5]: tsms_df_FILTERED.to_csv(data_destination+f"TSMS-Reference_Konya_final.csv", index=False)
+    # elif i in [6,7,8]: tsms_df_FILTERED.to_csv(data_destination+f"TSMS-Reference_Adana_final.csv", index=False)
+    # paws_df_FILTERED.to_csv(data_destination+f"3DPAWS_{station_directories[i][8:14]}_final.csv", index=False)
 
     print("\n----------------------")
 
@@ -724,39 +722,39 @@ for i in range(len(station_directories)):
     Create a time series plot of the 3D PAWS station data versus the TSMS reference station. MONTHLY RECORDS
     =============================================================================================================================
     """
-    # print(f"{station_directories[i][8:14]}: " \
-    #         "Time-series plots for temperature, humidity, actual pressure and sea level pressure -- monthly records")
+    print(f"{station_directories[i][8:14]}: " \
+            "Time-series plots for temperature, humidity, actual pressure and sea level pressure -- monthly records")
     
-    # paws_df_FILTERED.set_index('date', inplace=True)
-    # tsms_df_FILTERED.set_index('date', inplace=True)
+    paws_df_FILTERED.set_index('date', inplace=True)
+    tsms_df_FILTERED.set_index('date', inplace=True)
     
-    # tsms_df_FILTERED = tsms_df_FILTERED[paws_df_FILTERED.index[0]:paws_df_FILTERED.index[-1]]
+    tsms_df_FILTERED = tsms_df_FILTERED[paws_df_FILTERED.index[0]:paws_df_FILTERED.index[-1]]
 
-    # # Temperature ---------------------------------------------------------------------------------------------------------------
-    # print("Temperature per sensor")
-    # for t in variable_mapper['temperature']:
-    #     for year_month, paws_group in paws_df_FILTERED.groupby('year_month'):
-    #         tsms_group = tsms_df_FILTERED[tsms_df_FILTERED['year_month'] == year_month]
+    # Temperature ---------------------------------------------------------------------------------------------------------------
+    print("Temperature per sensor")
+    for t in variable_mapper['temperature']:
+        for year_month, paws_group in paws_df_FILTERED.groupby('year_month'):
+            tsms_group = tsms_df_FILTERED[tsms_df_FILTERED['year_month'] == year_month]
 
-    #         plt.figure(figsize=(20, 12))
+            plt.figure(figsize=(20, 12))
 
-    #         plt.plot(paws_group.index, paws_group[f'{t}'], marker='.', markersize=1, label=f"3D PAWS {t}")
-    #         plt.plot(tsms_group.index, tsms_group['temperature'], marker='.', markersize=1, label='TSMS')
+            plt.plot(paws_group.index, paws_group[f'{t}'], marker='.', markersize=1, label=f"3D PAWS {t}")
+            plt.plot(tsms_group.index, tsms_group['temperature'], marker='.', markersize=1, label='TSMS')
         
-    #         plt.title(f'{station_directories[i][8:14]} Temperature for {year_month}: 3D PAWS {t} versus TSMS')
-    #         plt.xlabel('Date')
-    #         plt.ylabel('Temperature (˚C)')
-    #         plt.xticks(rotation=45)
+            plt.title(f'{station_directories[i][8:14]} Temperature for {year_month}: 3D PAWS {t} versus TSMS')
+            plt.xlabel('Date')
+            plt.ylabel('Temperature (˚C)')
+            plt.xticks(rotation=45)
 
-    #         plt.legend()
+            plt.legend()
 
-    #         plt.grid(True)
-    #         plt.tight_layout()
-    #         # plt.savefig(data_destination+station_directories[i]+f"temp/raw/{station_directories[i][8:14]}_{t}_{year_month}.png")
-    #         plt.savefig(data_destination+station_directories[i]+f"temperature\\{station_directories[i][8:14]}_{t}_{year_month}.png")
+            plt.grid(True)
+            plt.tight_layout()
+            # plt.savefig(data_destination+station_directories[i]+f"temp/raw/{station_directories[i][8:14]}_{t}_{year_month}.png")
+            plt.savefig(data_destination+station_directories[i]+f"temperature\\{station_directories[i][8:14]}_{t}_{year_month}.png")
             
-    #         plt.clf()
-    #         plt.close()
+            plt.clf()
+            plt.close()
 
 
     # # Humidity ------------------------------------------------------------------------------------------------------------------
@@ -1925,6 +1923,9 @@ Complete record with daily average difference
 #             merged_df[f"{sensor}_1_diff"] = merged_df[f'{sensor}_1'] - merged_df['actual_pressure'] # 3D-PAWS instrument 1
 #             merged_df[f"{sensor}_2_diff"] = merged_df[f'{sensor}_2'] - merged_df['actual_pressure'] # 3D-PAWS instrument 2
 #             merged_df[f"{sensor}_diff"] = merged_df[f'{sensor}'] - merged_df['actual_pressure']     # 3D-PAWS instrument 3
+#             # merged_df[f"{sensor}_1_diff"] = merged_df['actual_pressure'] - merged_df[f'{sensor}_1'] # 3D-PAWS instrument 1
+#             # merged_df[f"{sensor}_2_diff"] = merged_df['actual_pressure'] - merged_df[f'{sensor}_2'] # 3D-PAWS instrument 2
+#             # merged_df[f"{sensor}_diff"] = merged_df['actual_pressure'] - merged_df[f'{sensor}']     # 3D-PAWS instrument 3
 
 #             daily_mean_diffs.append({
 #                 'date':year_month_day,
@@ -1960,7 +1961,7 @@ Complete record with daily average difference
 #         plt.tight_layout()
 
 #         #plt.savefig(data_destination+station_directories[i]+f"total_rainfall/raw/{station_directories[i][8:14]}_rainfall_accumulation_TEST.png")
-#         plt.savefig(data_destination+sites[i]+f"\\actual_pressure\\difference-plots\\{sites[i]}_actual_pressure_difference.png")
+#         plt.savefig(data_destination+sites[i]+f"\\actual_pressure\\{sites[i]}_actual_pressure_difference.png")
 
 #         plt.clf()
 #         plt.close()
@@ -2017,6 +2018,9 @@ Daily average difference
 #             merged_df[f"{sensor}_1_diff"] = merged_df[f'{sensor}_1'] - merged_df['temperature'] # 3D-PAWS instrument 1
 #             merged_df[f"{sensor}_2_diff"] = merged_df[f'{sensor}_2'] - merged_df['temperature'] # 3D-PAWS instrument 2
 #             merged_df[f"{sensor}_diff"] = merged_df[f'{sensor}'] - merged_df['temperature']     # 3D-PAWS instrument 3
+#             # merged_df[f"{sensor}_1_diff"] = merged_df['temperature'] - merged_df[f'{sensor}_1'] # 3D-PAWS instrument 1
+#             # merged_df[f"{sensor}_2_diff"] = merged_df['temperature'] - merged_df[f'{sensor}_2'] # 3D-PAWS instrument 2
+#             # merged_df[f"{sensor}_diff"] = merged_df['temperature'] - merged_df[f'{sensor}']     # 3D-PAWS instrument 3
 
 #             daily_mean_diffs.append({
 #                 'date':year_month_day,
@@ -2052,7 +2056,7 @@ Daily average difference
 #         plt.tight_layout()
 
 #         #plt.savefig(data_destination+station_directories[i]+f"total_rainfall/raw/{station_directories[i][8:14]}_rainfall_accumulation_TEST.png")
-#         plt.savefig(data_destination+sites[i]+f"\\temperature\\difference-plots\\{sites[i]}_{sensor}_temperature_difference.png")
+#         plt.savefig(data_destination+sites[i]+f"\\temperature\\{sites[i]}_{sensor}_temperature_difference.png")
 
 #         plt.clf()
 #         plt.close()
@@ -2109,6 +2113,9 @@ Daily average difference
 #             merged_df[f"{sensor}_1_diff"] = merged_df[f'{sensor}_1'] - merged_df['humidity'] # 3D-PAWS instrument 1
 #             merged_df[f"{sensor}_2_diff"] = merged_df[f'{sensor}_2'] - merged_df['humidity'] # 3D-PAWS instrument 2
 #             merged_df[f"{sensor}_diff"] = merged_df[f'{sensor}'] - merged_df['humidity']     # 3D-PAWS instrument 3
+#             # merged_df[f"{sensor}_1_diff"] = merged_df['humidity'] - merged_df[f'{sensor}_1'] # 3D-PAWS instrument 1
+#             # merged_df[f"{sensor}_2_diff"] = merged_df['humidity'] - merged_df[f'{sensor}_2'] # 3D-PAWS instrument 2
+#             # merged_df[f"{sensor}_diff"] = merged_df['humidity'] - merged_df[f'{sensor}']     # 3D-PAWS instrument 3
 
 #             daily_mean_diffs.append({
 #                 'date':year_month_day,
@@ -2146,7 +2153,7 @@ Daily average difference
 #         plt.tight_layout()
 
 #         #plt.savefig(data_destination+station_directories[i]+f"total_rainfall/raw/{station_directories[i][8:14]}_rainfall_accumulation_TEST.png")
-#         plt.savefig(data_destination+sites[i]+f"\\humidity\\difference-plots\\{sites[i]}_{sensor}_humidity_difference.png")
+#         plt.savefig(data_destination+sites[i]+f"\\humidity\\{sites[i]}_{sensor}_humidity_difference.png")
 
 #         plt.clf()
 #         plt.close()
