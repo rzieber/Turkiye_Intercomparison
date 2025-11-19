@@ -18,9 +18,9 @@ How to use this script:
     The outlier removal logic in the first portion of this script is to remain uncommented.
     The plot generating scripts which follow the outlier removal portion should have only the 1 logic block uncommented.
     Each section of plot gen logic is separated by a header. The following is an example:
-    =============================================================================================================================
-    Create a time series plot of the 3D PAWS station data versus the TSMS reference station. MONTHLY RECORDS
-    =============================================================================================================================
+        =============================================================================================================================
+        Create a time series plot of the 3D PAWS station data versus the TSMS reference station. MONTHLY RECORDS
+        =============================================================================================================================
 """
 
 import os
@@ -35,17 +35,15 @@ from scipy.stats import pearsonr, linregress
 from sklearn.metrics import mean_squared_error
 import seaborn as sns
 from pathlib import Path
-from datetime import timedelta
+from datetime import timedelta, datetime
 from functools import reduce
 
 sys.path.append(str(Path(__file__).resolve().parents[2]))
 from resources import functions as func
 
 
-data_origin = ...
-#data_origin = ...
-data_destination = ...
-#data_destination = ...
+data_origin = r"/Users/rzieber/Documents/3D-PAWS/Turkiye/reformatted/CSV_Format/analysis/"
+data_destination = r"/Users/rzieber/Documents/3D-PAWS/Turkiye/plots/stats-plots/finale/"
 
 outlier_reasons = [
     "null", "timestamp_reset", "threshold", "manual_removal", "htu_trend_switch", "z-score_contextual",
@@ -64,16 +62,16 @@ variable_mapper = { # TSMS : 3DPAWS
     "avg_wind_speed":["wind_speed"], 
     "total_rainfall":["tipping"]
 }
-# station_directories = [ # i really oughta do pathlib for os agnostic code, this is silly
-#     "station_TSMS00/", "station_TSMS01/", "station_TSMS02/",   
-#     "station_TSMS03/", "station_TSMS04/", "station_TSMS05/",
-#     "station_TSMS06/", "station_TSMS07/", "station_TSMS08/"
-# ]
-station_directories = [
-    "station_TSMS00\\", "station_TSMS01\\", "station_TSMS02\\",   
-    "station_TSMS03\\", "station_TSMS04\\", "station_TSMS05\\",
-    "station_TSMS06\\", "station_TSMS07\\", "station_TSMS08\\"
+station_directories = [ # i really oughta do pathlib for os agnostic code, this is silly
+    "station_TSMS00/", "station_TSMS01/", "station_TSMS02/",   
+    "station_TSMS03/", "station_TSMS04/", "station_TSMS05/",
+    "station_TSMS06/", "station_TSMS07/", "station_TSMS08/"
 ]
+# station_directories = [
+#     "station_TSMS00\\", "station_TSMS01\\", "station_TSMS02\\",   
+#     "station_TSMS03\\", "station_TSMS04\\", "station_TSMS05\\",
+#     "station_TSMS06\\", "station_TSMS07\\", "station_TSMS08\\"
+# ]
 
 station_files = [] # list of lists of filenames under each station directory [[TSMS00 files], [TSMS01 files], [TSMS02 files]...]
 for station in station_directories:
@@ -88,7 +86,6 @@ for i in range(len(station_directories)):
             try:
                 for var in station_variables:
                     os.makedirs(data_destination+station_directories[i]+var+'/', exist_ok=True)
-                    #os.makedirs(data_destination+station_directories[i]+var+'/raw/', exist_ok=True)
             except Exception as e:
                 print("Error creating the directory: ", var)
     except Exception as e:
@@ -358,7 +355,7 @@ for i in range(len(station_directories)):
     print(f"Phase 4: Manual removal of known outliers (see Phase 4 in code for notes).") 
 
     """
-    NOTE: The outliers specified in station_rules fall exclusively under these categories:
+    NOTE: The outliers specified in the station_rules variable fall exclusively under these categories:
             - test data generated during the fabrication process
             - erroneous spikes (e.g. random false zero's) which weren't removed during the statistical 
                 outlier cleaning sweep
@@ -367,9 +364,10 @@ for i in range(len(station_directories)):
         data removed was determined to be the result of a faulty connection (TSMS08) and test data 
         generated during the fabrication process (TSMS04).
 
+        IMPORTANT:
         Not removed from the final dataset includes erroneous HTU temperature and r. humidity data.
         The HTU was observed in stations TSMS00 -> TSMS04 to suffer from a "bit-switching" issue, 
-        whereby the temperature trend would toggle between valid temperature readings and erroneous 
+        where the temperature trend would toggle between valid temperature readings and erroneous 
         r. humidity readings at 1 -> 4 minute intervals. The same is true of the r. humidity trend --
         valid r. humidity readings would be interspersed with erroneous temperature data. 
         Timescales on the order of a few hours up to 2 months would be continuously affected by this 
@@ -570,7 +568,7 @@ for i in range(len(station_directories)):
     Phase 5: Filter out contextual outliers using statistical methods.
     =============================================================================================================================
     """
-    print(f"Phase 5: Filtering out contextual outliers using rolling z-score and Hampel filter.")
+    print(f"Phase 5: Filtering out contextual outliers using rolling Z-score and Hampel filter.")
 
     tsms_df_FILTERED.reset_index(drop=True, inplace=True)         
     paws_df_FILTERED.reset_index(drop=True, inplace=True)
@@ -703,17 +701,17 @@ for i in range(len(station_directories)):
     CREATE FINAL CSV'S
     =========================================================================================================
     """
-    paws_df_FILTERED.drop(columns=['bme2_hum','year_month', 'year_month_day', 'year_month_day_hour'], inplace=True)
+    # paws_df_FILTERED.drop(columns=['bme2_hum','year_month', 'year_month_day', 'year_month_day_hour'], inplace=True)
 
-    if i in [0,1,2]: tsms_outliers.to_csv(data_destination+f"TSMS-Reference_Ankara_outliers.csv", index=False)
-    elif i in [3,4,5]: tsms_outliers.to_csv(data_destination+f"TSMS-Reference_Konya_outliers.csv", index=False)
-    elif i in [6,7,8]: tsms_outliers.to_csv(data_destination+f"TSMS-Reference_Adana_outliers.csv", index=False)
-    paws_outliers.to_csv(data_destination+f"3DPAWS_{station_directories[i][8:14]}_outliers.csv", index=False)
+    # if i in [0,1,2]: tsms_outliers.to_csv(data_destination+f"TSMS-Reference_Ankara_outliers.csv", index=False)
+    # elif i in [3,4,5]: tsms_outliers.to_csv(data_destination+f"TSMS-Reference_Konya_outliers.csv", index=False)
+    # elif i in [6,7,8]: tsms_outliers.to_csv(data_destination+f"TSMS-Reference_Adana_outliers.csv", index=False)
+    # paws_outliers.to_csv(data_destination+f"3DPAWS_{station_directories[i][8:14]}_outliers.csv", index=False)
 
-    if i in [0,1,2]: tsms_df_FILTERED.to_csv(data_destination+f"TSMS-Reference_Ankara_final.csv", index=False)
-    elif i in [3,4,5]: tsms_df_FILTERED.to_csv(data_destination+f"TSMS-Reference_Konya_final.csv", index=False)
-    elif i in [6,7,8]: tsms_df_FILTERED.to_csv(data_destination+f"TSMS-Reference_Adana_final.csv", index=False)
-    paws_df_FILTERED.to_csv(data_destination+f"3DPAWS_{station_directories[i][8:14]}_final.csv", index=False)
+    # if i in [0,1,2]: tsms_df_FILTERED.to_csv(data_destination+f"TSMS-Reference_Ankara_final.csv", index=False)
+    # elif i in [3,4,5]: tsms_df_FILTERED.to_csv(data_destination+f"TSMS-Reference_Konya_final.csv", index=False)
+    # elif i in [6,7,8]: tsms_df_FILTERED.to_csv(data_destination+f"TSMS-Reference_Adana_final.csv", index=False)
+    # paws_df_FILTERED.to_csv(data_destination+f"3DPAWS_{station_directories[i][8:14]}_final.csv", index=False)
 
     print("\n----------------------")
 
@@ -738,7 +736,7 @@ for i in range(len(station_directories)):
     #     for year_month, paws_group in paws_df_FILTERED.groupby('year_month'):
     #         tsms_group = tsms_df_FILTERED[tsms_df_FILTERED['year_month'] == year_month]
 
-    #         plt.figure(figsize=(20, 12))
+    #         plt.figure(figsize=(12, 6))
 
     #         plt.plot(paws_group.index, paws_group[f'{t}'], marker='.', markersize=1, label=f"3D PAWS {t}")
     #         plt.plot(tsms_group.index, tsms_group['temperature'], marker='.', markersize=1, label='TSMS')
@@ -752,8 +750,8 @@ for i in range(len(station_directories)):
 
     #         plt.grid(True)
     #         plt.tight_layout()
-    #         # plt.savefig(data_destination+station_directories[i]+f"temp/raw/{station_directories[i][8:14]}_{t}_{year_month}.png")
-    #         plt.savefig(data_destination+station_directories[i]+f"temperature\\{station_directories[i][8:14]}_{t}_{year_month}.png")
+    #         plt.savefig(data_destination+station_directories[i]+f"temperature/{station_directories[i][8:14]}_{t}_{year_month}.png")
+    #         #plt.savefig(data_destination+station_directories[i]+f"temperature\\{station_directories[i][8:14]}_{t}_{year_month}.png")
             
     #         plt.clf()
     #         plt.close()
@@ -766,7 +764,7 @@ for i in range(len(station_directories)):
     #     for year_month, paws_group in paws_df_FILTERED.groupby('year_month'):
     #         tsms_group = tsms_df_FILTERED[tsms_df_FILTERED['year_month'] == year_month]
 
-    #         plt.figure(figsize=(20, 12))
+    #         plt.figure(figsize=(12, 6))
 
     #         plt.plot(paws_group.index, paws_group[f'{h}'], marker='.', markersize=1, label=f"3D PAWS {h}")
     #         plt.plot(tsms_group.index, tsms_group['humidity'], marker='.', markersize=1, label='TSMS')
@@ -780,8 +778,8 @@ for i in range(len(station_directories)):
 
     #         plt.grid(True)
     #         plt.tight_layout()
-    #         # plt.savefig(data_destination+station_directories[i]+f"humidity/raw/{station_directories[i][8:14]}_{h}_{year_month}.png")
-    #         plt.savefig(data_destination+station_directories[i]+f"humidity\\{station_directories[i][8:14]}_{h}_{year_month}.png")
+    #         plt.savefig(data_destination+station_directories[i]+f"humidity/{station_directories[i][8:14]}_{h}_{year_month}.png")
+    #         #plt.savefig(data_destination+station_directories[i]+f"humidity\\{station_directories[i][8:14]}_{h}_{year_month}.png")
             
     #         plt.clf()
     #         plt.close()
@@ -792,7 +790,7 @@ for i in range(len(station_directories)):
     # for year_month, paws_group in paws_df_FILTERED.groupby("year_month"):
     #     tsms_group = tsms_df_FILTERED[tsms_df_FILTERED['year_month'] == year_month]
 
-    #     plt.figure(figsize=(20, 12))
+    #     plt.figure(figsize=(12, 6))
 
     #     plt.plot(paws_group.index, paws_group['bmp2_pres'], marker='.', markersize=1, label="3D PAWS bmp2_pres")
     #     plt.plot(tsms_group.index, tsms_group['actual_pressure'], marker='.', markersize=1, label='TSMS')
@@ -806,8 +804,8 @@ for i in range(len(station_directories)):
 
     #     plt.grid(True)
     #     plt.tight_layout()
-    #     # plt.savefig(data_destination+station_directories[i]+f"actual_pressure/raw/{station_directories[i][8:14]}_bmp2_pres_{year_month}.png")
-    #     plt.savefig(data_destination+station_directories[i]+f"actual_pressure\\{station_directories[i][8:14]}_bmp2_pres_{year_month}.png")
+    #     plt.savefig(data_destination+station_directories[i]+f"actual_pressure/{station_directories[i][8:14]}_bmp2_pres_{year_month}.png")
+    #     #plt.savefig(data_destination+station_directories[i]+f"actual_pressure\\{station_directories[i][8:14]}_bmp2_pres_{year_month}.png")
         
     #     plt.clf()
     #     plt.close()
@@ -818,7 +816,7 @@ for i in range(len(station_directories)):
     # for year_month, paws_group in paws_df_FILTERED.groupby("year_month"):
     #     tsms_group = tsms_df_FILTERED[tsms_df_FILTERED['year_month'] == year_month]
 
-    #     plt.figure(figsize=(20, 12))
+    #     plt.figure(figsize=(12, 6))
 
     #     plt.plot(paws_group.index, paws_group['bmp2_slp'], marker='.', markersize=1, label="3D PAWS bmp2_slp")
     #     plt.plot(tsms_group.index, tsms_group['sea_level_pressure'], marker='.', markersize=1, label='TSMS')
@@ -832,8 +830,8 @@ for i in range(len(station_directories)):
 
     #     plt.grid(True)
     #     plt.tight_layout()
-    #     # plt.savefig(data_destination+station_directories[i]+f"sea_level_pressure/raw/{station_directories[i][8:14]}_bmp2_slp_{year_month}.png")
-    #     plt.savefig(data_destination+station_directories[i]+f"sea_level_pressure\\{station_directories[i][8:14]}_bmp2_slp_{year_month}.png")
+    #     plt.savefig(data_destination+station_directories[i]+f"sea_level_pressure/{station_directories[i][8:14]}_bmp2_slp_{year_month}.png")
+    #     #plt.savefig(data_destination+station_directories[i]+f"sea_level_pressure\\{station_directories[i][8:14]}_bmp2_slp_{year_month}.png")
         
     #     plt.clf()
     #     plt.close()
@@ -878,7 +876,7 @@ for i in range(len(station_directories)):
 
     # index = range(len(months))
 
-    # plt.figure(figsize=(20, 12))
+    # plt.figure(figsize=(18, 12))
 
     # bars1 = plt.bar(index, paws_values, width=0.35, color='blue', label='3DPAWS Rainfall')
     # bars2 = plt.bar([i + 0.35 for i in index], tsms_values, width=0.35, color='orange', label='TSMS Rainfall')
@@ -899,12 +897,10 @@ for i in range(len(station_directories)):
     #     yval = bar.get_height()
     #     plt.text(bar.get_x() + bar.get_width()/2, yval, round(yval, 2), ha='center', va='bottom', fontsize=12)
 
-    # # Display the plot
     # plt.tight_layout()
 
-    # # Save the plot
-    # #plt.savefig(data_destination+station_directories[i]+f"total_rainfall/raw/{station_directories[i][8:14]}_monthly_rainfall.png")   
-    # plt.savefig(data_destination+station_directories[i]+f"total_rainfall\\{station_directories[i][8:14]}_monthly_rainfall.png") 
+    # plt.savefig(data_destination+station_directories[i]+f"total_rainfall/{station_directories[i][8:14]}_monthly_rainfall.png")   
+    # #plt.savefig(data_destination+station_directories[i]+f"total_rainfall\\{station_directories[i][8:14]}_monthly_rainfall.png") 
     
     # plt.clf()
     # plt.close()   
@@ -1016,7 +1012,7 @@ for i in range(len(station_directories)):
         
     # ax.grid(True, linewidth=0.5)  # Thinner grid lines can improve readability
 
-    # # plt.savefig(data_destination+station_directories[i]+f"wind/raw/{station_directories[i][8:14]}_nonvariable_winds.png")
+    # #plt.savefig(data_destination+station_directories[i]+f"wind/{station_directories[i][8:14]}_nonvariable_winds.png")
     # plt.savefig(data_destination+station_directories[i]+f"wind\\3DPAWS_{station_directories[i][8:14]}_nonvariable_winds.png")
     # # plt.savefig(data_destination+station_directories[i]+f"wind\\3DPAWS_{station_directories[i][8:14]}_variable_winds.png")
     # plt.clf()
@@ -1174,7 +1170,7 @@ for i in range(len(station_directories)):
     # for year_month, paws_group in paws_df_FILTERED.groupby('year_month'):
     #     tsms_group = tsms_df_FILTERED_2[tsms_df_FILTERED_2['year_month'] == year_month]
 
-    #     plt.figure(figsize=(20, 12))
+    #     plt.figure(figsize=(12, 6))
 
     #     plt.plot(paws_group['date'], paws_group["bmp2_temp"], marker='.', markersize=1, label=f"3D PAWS bmp2_temp")
     #     plt.plot(paws_group['date'], paws_group["htu_temp"], marker='.', markersize=1, label=f"3D PAWS htu_temp")
@@ -1190,8 +1186,8 @@ for i in range(len(station_directories)):
 
     #     plt.grid(True)
     #     plt.tight_layout()
-    #     # plt.savefig(data_destination+station_directories[i]+f"temperature/raw/{station_directories[i][8:14]}_temp_comparison_{year_month}.png")
-    #     plt.savefig(data_destination+station_directories[i]+f"temperature-comparison\\{station_directories[i][8:14]}_temp_comparison_{year_month}.png")
+    #     plt.savefig(data_destination+station_directories[i]+f"temperature/{station_directories[i][8:14]}_temp_comparison_{year_month}.png")
+    #     #plt.savefig(data_destination+station_directories[i]+f"temperature-comparison\\{station_directories[i][8:14]}_temp_comparison_{year_month}.png")
 
     #     plt.clf()
     #     plt.close()
@@ -1208,8 +1204,7 @@ for i in range(len(station_directories)):
     # for variable in station_variables: 
     #     print(f"{variable} -- 3D PAWS vs TSMS")
 
-    #     if variable == 'wind':
-    #         continue
+    #     if variable == 'wind': variable = 'avg_wind_speed'
 
     #     for v in variable_mapper[f'{variable}']:
     #         if v == 'bme2_hum': 
@@ -1238,7 +1233,7 @@ for i in range(len(station_directories)):
     #             mask = x.notna() & y.notna()
     #             x, y = x[mask], y[mask]
 
-    #             plt.figure(figsize=(20, 12))
+    #             plt.figure(figsize=(6, 6))
 
     #             plt.scatter(x, y, alpha=0.5, s=10)
 
@@ -1261,15 +1256,15 @@ for i in range(len(station_directories)):
     #             plt.text(0.05, 0.95, textstr, transform=plt.gca().transAxes, fontsize=12,
     #                     verticalalignment='top', bbox=bbox_props)
 
-    #             plt.title(f'{station_directories[i][8:14]} 3D PAWS {variable_mapper[variable]} versus TSMS')
-    #             plt.xlabel(f'3D PAWS {variable_mapper[variable]}')
+    #             plt.title(f'{station_directories[i][8:14]} 3D PAWS Rainfall versus TSMS')
+    #             plt.xlabel(f'3D PAWS Rainfall')
     #             plt.ylabel(f"TSMS {variable}")
 
     #             plt.legend()
     #             plt.grid(True)
     #             plt.tight_layout()
 
-    #             plt.savefig(data_destination+station_directories[i]+f"{variable}\\{station_directories[i][8:14]}_rainfall_scatter.png")
+    #             plt.savefig(data_destination+station_directories[i]+f"{variable}/{station_directories[i][8:14]}_rainfall_scatter-plot.png")
     
     #             plt.clf()
     #             plt.close()
@@ -1290,7 +1285,7 @@ for i in range(len(station_directories)):
     #         mask = np.isfinite(x) & np.isfinite(y)
     #         x, y = x[mask], y[mask]
 
-    #         plt.figure(figsize=(20, 12))
+    #         plt.figure(figsize=(6, 6))
 
     #         plt.scatter(x, y, alpha=0.5, s=10)
 
@@ -1320,7 +1315,9 @@ for i in range(len(station_directories)):
     #         plt.grid(True)
     #         plt.tight_layout()
 
-    #         plt.savefig(data_destination+station_directories[i]+f"{variable}\\{station_directories[i][8:14]}_{v}_scatter.png")
+    #         if variable == "avg_wind_speed": variable = "wind"
+
+    #         plt.savefig(data_destination+station_directories[i]+f"{variable}/{station_directories[i][8:14]}_{v}_scatter-plot.png")
 
     #         plt.clf()
     #         plt.close()
@@ -1446,6 +1443,261 @@ for i in range(len(station_directories)):
     # plt.close()  
 
 
+    """
+    =============================================================================================================================
+    Creating box plots for temperature, relative humidity, pressure, wind speed, and rain. COMPLETE RECORDS
+    =============================================================================================================================
+    """
+    # print(f"{station_directories[i][8:14]} Box Plots")
+
+    # paws_temp_cols = ['bmp2_temp', 'htu_temp', 'mcp9808']
+    # paws_hum_cols = ['htu_hum']
+    # paws_pres_cols = ['bmp2_pres']
+    # paws_wind_cols = ['wind_speed']
+    # paws_rain_cols = ['tipping']
+    # tsms_temp_cols = ['temperature']
+    # tsms_hum_cols = ['humidity']
+    # tsms_pres_cols = ['actual_pressure']
+    # tsms_wind_cols = ['avg_wind_speed']
+    # tsms_rain_cols = ['total_rainfall']
+
+    # combined_df = paws_df_FILTERED.merge(
+    #     tsms_df_FILTERED[tsms_temp_cols + tsms_hum_cols + tsms_pres_cols + tsms_wind_cols + tsms_rain_cols], 
+    #     left_index=True, right_index=True
+    # )
+    # combined_temp_df = combined_df[paws_temp_cols + ['temperature']]
+    # combined_hum_df = combined_df[paws_hum_cols + ['humidity']]
+    # combined_pres_df = combined_df[paws_pres_cols + ['actual_pressure']]
+    # combined_wind_df = combined_df[paws_wind_cols + ['avg_wind_speed']]
+    # combined_rain_df = combined_df[paws_rain_cols + ['total_rainfall']]
+
+    # # temperature box plot
+    # plt.figure(figsize=(12, 12))
+    # sns.boxplot(data=combined_temp_df, palette=['blue', 'orange', 'green', 'red'])
+
+    # plt.title(f'{station_directories[i][8:14]} Temperature Box Plot: 3D-PAWS & TSMS')
+    # plt.xlabel('Temperature Sensors')
+    # plt.ylabel('Temperature (°C)')
+    # plt.xticks([0, 1, 2, 3], ['BMP2 Temp', 'HTU Temp', 'MCP9808 Temp', 'TSMS Reference Temp'])
+    # plt.grid(True)
+
+    # plt.tight_layout()
+    # plt.savefig(data_destination+station_directories[i]+f"/temperature/{station_directories[i][8:14]}_box-plot.png")
+    # plt.clf()
+    # plt.close()
+
+    # # humidity boxplot
+    # plt.figure(figsize=(12, 12))
+    # sns.boxplot(data=combined_hum_df, palette=['blue', 'red'])
+
+    # plt.title(f'{station_directories[i][8:14]} Humidity Box Plot: 3D-PAWS & TSMS')
+    # plt.xlabel('Humidity Sensors')
+    # plt.ylabel('Humidity (%)')
+    # plt.xticks([0, 1], ['HTU Hum', 'TSMS Reference Hum'])
+    # plt.grid(True)
+
+    # plt.tight_layout()
+    # plt.savefig(data_destination+station_directories[i]+f"/humidity/{station_directories[i][8:14]}_box-plot.png")
+    # plt.clf()
+    # plt.close()
+
+    # # pressure box plots
+    # plt.figure(figsize=(12, 12))
+    # sns.boxplot(data=combined_pres_df, palette=['blue', 'red'])
+
+    # plt.title(f'{station_directories[i][8:14]} Pressure Box Plot: 3D-PAWS & TSMS')
+    # plt.xlabel('Pressure Sensors')
+    # plt.ylabel('Station Pressure (hPa)')
+    # plt.xticks([0, 1], ['BMP2 Pressure', 'TSMS Reference Pressure'])
+    # plt.grid(True)
+
+    # plt.tight_layout()
+    # plt.savefig(data_destination+station_directories[i]+f"/actual_pressure/{station_directories[i][8:14]}_box-plot.png")
+    # plt.clf()
+    # plt.close()
+
+    # # wind speed box plots
+    # plt.figure(figsize=(12, 12))
+    # sns.boxplot(data=combined_pres_df, palette=['blue', 'red'])
+
+    # plt.title(f'{station_directories[i][8:14]} Wind Speed Box Plot: 3D-PAWS & TSMS')
+    # plt.xlabel('Anemometers')
+    # plt.ylabel('Wind Speed (m/s)')
+    # plt.xticks([0, 1], ['3D-PAWS Anemometer', 'TSMS Reference Anemometer'])
+    # plt.grid(True)
+
+    # plt.tight_layout()
+    # plt.savefig(data_destination+station_directories[i]+f"/wind/{station_directories[i][8:14]}_box-plot.png")
+    # plt.clf()
+    # plt.close()
+
+    # # precipitation box plots
+    # plt.figure(figsize=(12, 12))
+    # sns.boxplot(data=combined_pres_df, palette=['blue', 'red'])
+
+    # plt.title(f'{station_directories[i][8:14]} Precipitation Box Plot: 3D-PAWS & TSMS')
+    # plt.xlabel('Precipitation Sensors')
+    # plt.ylabel('Total Rainfall (mm)')
+    # plt.xticks([0, 1], ['3D-PAWS Tipping Bucket', 'TSMS Reference Gauge'])
+    # plt.grid(True)
+
+    # plt.tight_layout()
+    # plt.savefig(data_destination+station_directories[i]+f"/total_rainfall/{station_directories[i][8:14]}_box-plot.png")
+    # plt.clf()
+    # plt.close()
+
+
+    """
+    =============================================================================================================================
+    Violin plots for temperature, humidity, and pressure. COMPLETE RECORDS
+    * this style of plot is uninformative for wind speed and precip
+    =============================================================================================================================
+    """
+    print(f"{station_directories[i][8:14]} Violin Plots")
+
+    y_axis_labels = {
+        'temperature': 'Temperature (˚C)',
+        'humidity': 'Relative Humidity (%)',
+        'actual_pressure': 'Pressure (hPa)'
+    }
+
+    for var in station_variables:
+        if var in ['sea_level_pressure', 'wind', 'total_rainfall']: continue
+
+        for v in variable_mapper[var]:
+            if v in ['bme2_hum']: continue
+
+            x_axis_labels = {
+                v: f'3D-PAWS ({v})',
+                var: 'TSMS Reference Sensor'
+            }
+            custom_palette = {
+                x_axis_labels[v]: "#1f77b4",        # Blue
+                "TSMS Reference Sensor": "#d62728"  # Red
+            }
+
+            merged_df = pd.merge(
+                paws_df_FILTERED.reset_index()[['date', v]], 
+                tsms_df_FILTERED.reset_index()[['date' ,var]],
+                on='date', 
+                suffixes=['_paws', '_tsms']
+            )
+        
+            long_df = pd.melt(  # Seaborn wants data in long format
+                merged_df,
+                id_vars='date',
+                value_vars=[f'{v}', f'{var}'],
+                var_name='Source',
+                value_name='Value'
+            )
+            long_df['Source'] = long_df['Source'].map(x_axis_labels)
+
+            if v in ['htu_temp', 'htu_hum']:    # truncate to separate htu from sht
+                dates = [
+                    pd.to_datetime("2024-01-17 12:00:00"),  # Ankara
+                    pd.to_datetime("2024-01-12 12:00:00"),  # Konya
+                    pd.to_datetime("2024-01-15 12:00:00")   # Adana
+                ]
+
+                htu_df, sht_df = None, None
+                if i in [0,1,2]: 
+                    htu_df = long_df[((long_df['date'] >= long_df['date'].iloc[0]) & (long_df['date'] <= dates[0]))]
+                    sht_df = long_df[((long_df['date'] > dates[0]) & (long_df['date'] <= long_df['date'].iloc[-1]))]
+                elif i in [3,4,5]: 
+                    htu_df = long_df[((long_df['date'] >= long_df['date'].iloc[0]) & (long_df['date'] <= dates[1]))]
+                    sht_df = long_df[((long_df['date'] > dates[1]) & (long_df['date'] <= long_df['date'].iloc[-1]))]
+                else: 
+                    htu_df = long_df[((long_df['date'] >= long_df['date'].iloc[0]) & (long_df['date'] <= dates[2]))]
+                    sht_df = long_df[((long_df['date'] > dates[2]) & (long_df['date'] <= long_df['date'].iloc[-1]))]
+
+                plt.figure(figsize=(12, 12))
+                sns.violinplot(x='Source', y='Value', data=htu_df, palette=custom_palette, inner='box')
+                plt.title(f"{station_directories[i][8:14]} Violin Plot of {var[0].upper()+var[1:]}: 3D PAWS ({v}) vs TSMS Reference Sensor")
+                plt.ylabel(y_axis_labels[var])
+                plt.tight_layout()
+                plt.savefig(data_destination+station_directories[i]+f"/{var}/{station_directories[i][8:14]}_htu_violin-plot.png")
+                plt.clf()
+                plt.close()
+
+                plt.figure(figsize=(12, 12))
+                sns.violinplot(x='Source', y='Value', data=sht_df, palette=custom_palette, inner='box')
+                plt.title(f"{station_directories[i][8:14]} Violin Plot of {var[0].upper()+var[1:]}: 3D PAWS (sht) vs TSMS Reference Sensor")
+                plt.ylabel(y_axis_labels[var])
+                plt.tight_layout()
+                plt.savefig(data_destination+station_directories[i]+f"/{var}/{station_directories[i][8:14]}_sht_violin-plot.png")
+                plt.clf()
+                plt.close()
+
+                continue
+
+            plt.figure(figsize=(12, 12))
+            sns.violinplot(x='Source', y='Value', data=long_df, palette=custom_palette, inner='box')
+            plt.title(f"{station_directories[i][8:14]} Violin Plot of {var[0].upper()+var[1:]}: 3D PAWS ({v}) vs TSMS Reference Sensor")
+            plt.ylabel(y_axis_labels[var])
+            plt.tight_layout()
+            plt.savefig(data_destination+station_directories[i]+f"/{var}/{station_directories[i][8:14]}_{v}_violin-plot.png")
+            plt.clf()
+            plt.close()
+
+
+    """
+    =============================================================================================================================
+    Creating histograms for each variable. COMPLETE RECORDS
+    =============================================================================================================================
+    """
+    # print(f"{station_directories[i][8:14]} Histograms")
+
+    # for variable in variable_mapper.keys():
+    #     if variable in ['sea_level_pressure', 'total_rainfall']: continue
+
+    #     for var in variable_mapper[variable]:
+    #         if var in ['bme_hum']: continue
+
+    #         merged_df = pd.merge(
+    #             paws_df_FILTERED.reset_index()[['date', var]], 
+    #             tsms_df_FILTERED.reset_index()[['date' ,variable]],
+    #             on='date', 
+    #             suffixes=['_paws', '_tsms']
+    #         )
+
+    #         cleaned_df = merged_df.dropna(subset=[var, variable])
+
+    #         plt.figure(figsize=(12,12))
+    #         plt.hist(cleaned_df[var], bins=15, edgecolor='black')
+    #         plt.xlabel(variable[0].upper() + variable[1:])
+    #         plt.ylabel("Frequency")
+    #         plt.title(f"3D-PAWS {variable[0].upper()+variable[1:]} ({var})")
+    #         plt.tight_layout()
+    #         if variable in ['avg_wind_speed', 'avg_wind_dir']: 
+    #             plt.savefig(data_destination+station_directories[i]+f"/wind/{station_directories[i][8:14]}_{variable}_histogram.png")
+    #         else:
+    #             plt.savefig(data_destination+station_directories[i]+f"/{variable}/{station_directories[i][8:14]}_{var}_histogram.png")
+    #         plt.clf()
+    #         plt.close()
+
+    #         plt.figure(figsize=(12,12))
+    #         plt.hist(cleaned_df[variable], bins=15, edgecolor='black', color='indianred')
+    #         plt.xlabel(variable[0].upper()+variable[1:])
+    #         plt.ylabel("Frequency")
+    #         plt.title(f"TSMS {variable[0].upper()+variable[1:]}")
+    #         plt.tight_layout()
+    #         if variable in ['avg_wind_speed', 'avg_wind_dir']:
+    #             if i in [0,1,2]:
+    #                 plt.savefig(data_destination+station_directories[i]+f"/wind/TSMS-Ankara_{variable}_histogram.png")
+    #             elif i in [3,4,5]:
+    #                 plt.savefig(data_destination+station_directories[i]+f"/wind/TSMS-Konya_{variable}_histogram.png")
+    #             else:
+    #                 plt.savefig(data_destination+station_directories[i]+f"/wind/TSMS-Adana_{variable}_histogram.png")
+    #         else:
+    #             if i in [0,1,2]:
+    #                 plt.savefig(data_destination+station_directories[i]+f"/{variable}/TSMS-Ankara_histogram.png")
+    #             elif i in [3,4,5]:
+    #                 plt.savefig(data_destination+station_directories[i]+f"/{variable}/TSMS-Konya_histogram.png")
+    #             else:
+    #                 plt.savefig(data_destination+station_directories[i]+f"/{variable}/TSMS-Adana_histogram.png")
+    #         plt.clf()
+    #         plt.close()
+
 """
 =============================================================================================================================
 Site-wide comparison of each type of temperature sensor versus the reference. MONTHLY RECORDS
@@ -1503,8 +1755,9 @@ Site-wide comparison of each type of temperature sensor versus the reference. MO
 #             plt.grid(True)
 #             plt.tight_layout()
 
-#             #plt.savefig(data_destination+station_directories[i]+f"total_rainfall/raw/{station_directories[i][8:14]}_rainfall_accumulation_TEST.png")
-#             plt.savefig(data_destination+sites[i]+f"\\temperature\\{sites[i]}_{sensor}_{year_month}_temperature_comparison.png")
+#             #print(data_destination+station_directories[i]+f"temperature/{sites[i]}_{sensor}_{year_month}_temperature_comparison.png")
+#             plt.savefig(data_destination+station_directories[i]+f"temperature/{sites[i]}_{sensor}_{year_month}_temperature_comparison.png")
+#             #plt.savefig(data_destination+sites[i]+f"\\temperature\\{sites[i]}_{sensor}_{year_month}_temperature_comparison.png")
 
 #             plt.clf()
 #             plt.close()
